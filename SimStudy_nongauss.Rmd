@@ -1,0 +1,119 @@
+---
+title: "Mixture of Multivariate Skew Normals"
+author: "Alexander Dombowsky"
+date: "11/16/2022"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(sn)
+library(ggplot2)
+library(mcclust)
+library(mcclust.ext)
+library(mclust)
+library(grid)
+library(gridExtra)
+library(Rcpp)
+library(RcppArmadillo)
+library(foreach)
+library(doParallel)
+library(plyr)
+library(dplyr)
+library(reshape2)
+```
+# Introduction
+This is the simulation study for the skew-symmetric mixture. In this example, we repeatedly sample from this mixture, then cluster the data using FOLD, VI, Binder's, and \texttt{mclust}. This implementation is done using the \texttt{foreach} package in order to speed up computation. If you just want to see the results of one replication from this method, see the file "nongauss_cluster.R" in the "rfuncts" folder.
+
+# Preliminaries
+```{r}
+# r packages
+source("rfuncts/nongaussmix.R")
+source("rfuncts/mvnorm_gibbs.R")
+source("rfuncts/mnorm_D_apply.R")
+source("rfuncts/mergeloss.R")
+source("rfuncts/nongauss_cluster.R")
+source("rfuncts/multivar_normal.R")
+source("rfuncts/foldball.R")
+sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
+# parallel computing
+n.cores <- 10
+## create the cluster
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+  )
+## register it to be used by %dopar%
+doParallel::registerDoParallel(cl = my.cluster)
+```
+
+# Simulation Study
+```{r, warning = F}
+N <- c(100, 500, 1000, 2500) # sample size
+d <- 2 # dimension
+R <- 100  # replications at each n
+K_0 <- 3 # number of true mixture components
+S <- 9000 # iterations
+B <- 1000 # burnin
+L <- 30 # number of fitted components
+x <- foreach(i = 1:length(N)) %:%
+  foreach(r = 1:R,
+          .packages = c("mcclust", "sn", "mvtnorm"),
+          .noexport = c("ldmvnorm_arma",
+                           "maketau",
+                           "makeSigma",
+                           "makeSigmacube",
+                           "makeSigmaDet",
+                           "mnorm_D_arma",
+                           "makeHellingerAvg")) %dopar% {
+  nongauss.cluster(n = N[i],
+               S = S,
+               B = B,
+               d = d,
+               L = L)
+                           }
+Kplots <- ariplots <- Klist <- arilist <- list()
+K_avg <- K_sd <- ari_avg <- ari_sd <- matrix(0, nrow = length(N), ncol = 4)
+for (i in 1:length(N)){
+  x_i <- x[[i]]
+  K_i <- data.frame(matrix(unlist(x_i)[grepl("K", names(unlist(x_i)))], byrow = T, ncol = 4))
+  Klist[[i]] <- K_i
+  ari_i <- data.frame(matrix(unlist(x_i)[grepl("ari", names(unlist(x_i)))], byrow = T, ncol = 4))
+  arilist[[i]] <- ari_i
+  colnames(K_i) <- colnames(ari_i) <- c("FOLD", "VI", "Binder", "Mclust")
+  # avgs
+  K_avg[i,] <- round(colMeans(K_i),3)
+  K_sd[i,] <- round(apply(K_i, 2, sd),3)
+  ari_avg[i,] <- round(colMeans(ari_i),3)
+  ari_sd[i,] <- round(apply(ari_i, 2, sd),3)
+  # K plots
+  m_Ki <- melt(K_i)
+  Kplots[[i]] <- m_Ki %>% ggplot(aes(x = as.factor(variable), y = value, fill = as.factor(variable))) +   geom_boxplot() + xlab("Method") + ylab("No. of Clusters") +
+    labs(title = paste("n=", toString(N[i]))) + 
+    theme_bw() + 
+    theme(legend.position = "none",
+        text = element_text(size = 15)) 
+  # ari plots
+  m_ari <- melt(ari_i)
+  ariplots[[i]] <- m_ari %>% ggplot(aes(x = as.factor(variable), y = value, fill = as.factor(variable)))  + geom_boxplot() + xlab("Method") + ylab("Adjusted Rand Index") +
+    labs(title = paste("n=", toString(N[i]))) + 
+    theme_bw() + 
+    theme(legend.position = "none",
+        text = element_text(size = 15)) 
+}
+grid.arrange(Kplots[[1]],
+             Kplots[[2]],
+             Kplots[[3]],
+             Kplots[[4]],
+             nrow = 2)
+# evaluating number of clusters
+Kmat <- rbind(Klist[[1]],Klist[[2]],Klist[[3]],Klist[[4]])
+m <- mean(Kmat[,1]<=Kmat[,2])
+arimat <- rbind(arilist[[1]],arilist[[2]],arilist[[3]],arilist[[4]])
+m_a <- mean(arimat[,1] >= arimat[,2])
+grid.arrange(ariplots[[1]],
+             ariplots[[2]],
+             ariplots[[3]],
+             ariplots[[4]],
+             nrow = 2)
+```
+

@@ -1,0 +1,40 @@
+makecG_loc <- function(theta, Sigma, w, d, max.k){
+  require(mcclust.ext)
+  require(Rcpp)
+  require(RcppArmadillo)
+  source("rfuncts/mergeloss.R")
+  D <- locnorm_D_arma(mu=theta, Sigma=Sigma)
+  D <- D + t(D)
+  D.dist <- as.dist(D)
+  cl <- hclust(D.dist, method = "average")
+  labs <- matrix(0, nrow = max.k, ncol = n)
+  for (h in 1:max.k){
+    labs[h,] = cutree(cl, k = h)
+  }
+  losses <- apply(labs, 1, mergeloss, Delta_lt = Delta_H[lower.tri(Delta_H)], w=w)
+  # minimize
+  min_loss <- which.min(losses)
+  c.G <- labs[min_loss,]
+  return(c.G)
+}
+
+getcGsamps_loc <- function(theta, Sigma, w, d, max.k) {
+  cgsamps <- t(apply(theta, 3, function(x) makecG_loc(x, Sigma=Sigma, w=w, d=d, max.k=max.k)))
+  return(cgsamps)
+}
+
+#cGball <- function(c.fold, cgsamps){
+#  require(mcclust)
+#  require(mcclust.ext)
+  # credible ball
+#  cb <- credibleball(c.fold,cgsamps)
+#  return(cb)
+#}
+
+#cGpsm <- function(cgsamps){
+#  require(mcclust)
+#  require(mcclust.ext)
+  # credible ball
+#  cb <- mcclust::comp.psm(cgsamps)
+#  return(cb)
+#}
