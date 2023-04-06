@@ -1,3 +1,5 @@
+### simulation study given in the Supplementary Material ###
+# see the file "clusterspirals.R" in the "rfuncts" folder for one replication 
 # packages
 library(grid)
 library(gridExtra)
@@ -8,9 +10,6 @@ library(doParallel)
 library(plyr)
 library(dplyr)
 library(reshape2)
-# this is the simulation study presented in the Supplementary Material
-# see the file "clusterspirals.R" in the "rfuncts" folder for one replication 
-
 # r functions
 source("rfuncts/mvnorm_gibbs.R")
 source("rfuncts/mnorm_D_apply.R")

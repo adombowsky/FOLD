@@ -1,3 +1,4 @@
+### file to make all figures in main paper related to moons data ###
 # packages
 library(sn)
 library(ggplot2)
@@ -46,13 +47,13 @@ trip_ind <- seq(4,M,by=4)
 theta <- theta[,,trip_ind]
 z <- z[trip_ind,]
 # cluster
-# W & G estimate -- VI
+# VI
 c.psm <- mcclust::comp.psm(z)
 c.mv <- mcclust.ext::minVI(psm = c.psm,
                            cls.draw = z,
                            max.k = 10)
 c.VI <- c.mv$cl
-# W & G estimate -- VI
+# Binder's
 c.mv <- mcclust::minbinder(psm = c.psm,
                            cls.draw = z,
                            max.k = 10)
@@ -73,8 +74,6 @@ for (h in 1:max.k){
   labs[h,] = cutree(cl, k = h)
 }
 w_avg <- sum(Delta_UT)/(sum(1 - Delta_UT))
-gamma_med <- median(Delta_UT)
-w_med = gamma_med/(1-gamma_med)
 losses <- apply(labs, 1, mergeloss, Delta_lt = Delta_H[lower.tri(Delta_H)], w=w_avg)
 # default value
 min_loss <- which.min(losses)
@@ -305,7 +304,7 @@ df.bar %>%
 # credible ball and cGPSM
 heights <- rev(cl$height)[1:max.k]
 w_vals <- heights/(1-heights)
-cgsamps <- getcGsamps_loc(theta=theta, w=w_vals[3], d=2, max.k=10, Sigma=Sigma)
+cgsamps <- getcGsamps_loc(theta=theta, w=w_vals[3], d=2, max.k=10, Sigma=Sigma) # to match figure in main article
 # cgsamps <- read.csv("output/cells/cgsamps.csv")
 cb <- cGball(labs[3,],cgsamps)
 foldpsm <- cGpsm(cgsamps)
@@ -394,4 +393,5 @@ xlab(" ") + ylab(" ") +
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         plot.caption = element_text(hjust=0.5))
+# plotting point estimate with credible ball 
 plot_grid(foldcl, horizcl, lowervcl, uppervcl, labels = c("(a)", "(b)", "(c)", "(d)"))

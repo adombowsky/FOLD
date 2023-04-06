@@ -27,7 +27,7 @@ This is the simulation study for the mixture of bivariate skew Gaussian kernels.
 
 # Preliminaries
 ```{r}
-# r packages
+# r functions
 source("rfuncts/multivar_skewed.R")
 source("rfuncts/mvnorm_gibbs.R")
 source("rfuncts/mnorm_D_apply.R")

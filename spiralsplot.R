@@ -1,3 +1,4 @@
+### file used to make plot of spirals data in Supplementary Material ###
 # libraries
 library(KODAMA)
 library(ggplot2)

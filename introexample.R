@@ -1,3 +1,4 @@
+### file to make Figure 1 in intro of main paper ###
 # packages
 library(sn)
 library(ggplot2)
@@ -9,13 +10,14 @@ library(Rcpp)
 library(RcppArmadillo)
 library(mvtnorm)
 # functions
-# sample Multivariate Normal
+# sample two component Gaussian mixture
 multivar.gmm <- function(n, p, Mu, Sigma){
   s <- sample(1:2, size = n, replace = T, prob = c(p,1-p))
   x <- (s==1) * rmvnorm(n = n, mean = Mu[1,], sigma = Sigma[,,1]) +
     (s==2) * rmvnorm(n=n, mean = Mu[2,], sigma = Sigma[,,2])
   return(x)
 }
+# sample from skew-symmetric mixture
 nongauss <- function(n, Pi, xi, Omega, alpha, Mu_1, Sigma_1, Mu, Sigma, p){
   # omega = vector of probabilties for mixture
   # p_mix, mu_mix, sigma_mix = parameters for 3 component mixture

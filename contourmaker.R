@@ -1,3 +1,5 @@
+### file to make contour plots of densities used in the simulation study ###
+# packages
 require(mvtnorm)
 require(sn)
 require(ggplot2)

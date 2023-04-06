@@ -27,7 +27,10 @@ library(latex2exp)
 library(cowplot)
 ```
 
-# loading and pre-processing
+# Introduction
+This is the application of FOLD to the GSE81861 dataset. A version of the data is given in the "data" folder on the repository. First, we will pre-process the data, then reduce the dimension to five principal components. We will then fit a Bayesian Gaussian mixture and apply the EM algorithm to get clusterings from FOLD, VI, and \texttt{mclust}. For the FOLD clustering, we also compute a credible ball. 
+
+# Loading and Pre-Processing
 ```{r}
 cells_csv <- read.csv("data/cells.csv")
 cells <- as.matrix(cells_csv[,-1])
@@ -75,7 +78,7 @@ sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
 S <- 25000 # iterations
 B <- 1000 # burnin
 L <- 50 # components
-# fitting
+# fitting a Bayesian Gaussian mixture
 fit <- mvnorm_gibbs(S = S,
                     y = X,
                     L = L,
@@ -85,7 +88,7 @@ fit <- mvnorm_gibbs(S = S,
                     r = d+2,
                     C = diag(1,d),
                     stops = 1000)
-# burn-out
+# burnin
 theta <- fit$theta[-(1:B)]
 M <- length(theta)
 n <- nrow(X)
@@ -95,14 +98,12 @@ z <- fit$z[-(1:B),]
 trip_ind <- seq(4,M,by=4)
 theta <- theta[,,trip_ind]
 z <- z[trip_ind,]
-
 # apply hellinger distance function
 Delta_UT <- makeHellingerAvg(theta = theta, d = d, n = n)
 Delta <- matrix(0, nrow = n, ncol = n)
 Delta[upper.tri(Delta)] <- Delta_UT
 Delta <- Delta + t(Delta)
 Delta_H <- Delta
-
 # choose candidate set
 source("rfuncts/mergeloss.R")
 Delta <- as.dist(Delta)
@@ -113,7 +114,6 @@ labs <- matrix(0, nrow = max.k, ncol = n)
 for (h in 1:max.k){
   labs[h,] = cutree(cl, k = h)
 }
-# minimize
 # VI loss
 c.psm <- comp.psm(z)
 c.mv <- minVI(psm = c.psm,
@@ -312,5 +312,6 @@ xlab("UMAP1") + ylab("UMAP2") +
     #    panel.grid.minor = element_blank(),
     #    panel.border = element_blank()
     )
+# arranging into a grid
 plot_grid(foldumap, horizumap, lowervumap, uppervumap, labels = c('(a)', '(b)', '(c)', '(d)'))
 ```

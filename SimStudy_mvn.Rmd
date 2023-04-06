@@ -28,8 +28,7 @@ This is the simulation study for the mixture of bivariate Gaussian kernels. In t
 
 # Preliminaries
 ```{r}
-# r packages
-source("rfuncts/multivar_skewed.R")
+# r functions
 source("rfuncts/mvnorm_gibbs.R")
 source("rfuncts/mnorm_D_apply.R")
 source("rfuncts/mergeloss.R")
@@ -56,7 +55,7 @@ R <- 100 # replications at each n
 K_0 <- 3 # number of true mixture components
 S <- 9000 # iterations
 B <- 1000 # burnin
-L <- 30 # components
+L <- 30 # number of fitted components
 x <- foreach(i = 1:length(N)) %:%
   foreach(r = 1:R,
           .packages = c("mcclust", "mclust"),
@@ -78,13 +77,18 @@ x <- foreach(i = 1:length(N)) %:%
                d = d,
                L = L)
                         }
-Kplots <- list()
-ariplots <- list()
+Kplots <- ariplots <- list()
+K_avg <- K_sd <- ari_avg <- ari_sd <- matrix(0, nrow = length(N), ncol = 5)
 for (i in 1:length(N)){
   x_i <- x[[i]]
   K_i <- data.frame(matrix(unlist(x_i)[grepl("K", names(unlist(x_i)))], byrow = T, ncol = 5))
   ari_i <- data.frame(matrix(unlist(x_i)[grepl("ari", names(unlist(x_i)))], byrow = T, ncol = 5))
   colnames(K_i) <- colnames(ari_i) <- c("FOLD", "Oracle", "VI", "Binder", "Mclust")
+  # avgs
+  K_avg[i,] <- round(colMeans(K_i),3)
+  K_sd[i,] <- round(apply(K_i, 2, sd),3)
+  ari_avg[i,] <- round(colMeans(ari_i),3)
+  ari_sd[i,] <- round(apply(ari_i, 2, sd),3)
   # K plots
   m_Ki <- melt(K_i)
   Kplots[[i]] <- m_Ki %>% ggplot(aes(x = as.factor(variable), y = value, fill = as.factor(variable))) +   geom_boxplot() + xlab("Method") + ylab("No. of Clusters") +
