@@ -1,5 +1,5 @@
 ---
-title: "Mixture of Multivariate Skew Normals"
+title: "Skew Symmetric Mixture"
 author: "Alexander Dombowsky"
 date: "11/16/2022"
 output: html_document
