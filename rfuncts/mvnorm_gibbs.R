@@ -19,8 +19,8 @@ mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), w, kappa, r, C, stops = 1){
   Rcpp::sourceCpp("rcppfuncts/clusterlabs_arma.cpp")
   
   # r functions
-  source("rfuncts/mnorm_hellinger.R")
-  source("rfuncts/mnorm_D.R")
+  #source("rfuncts/mnorm_hellinger.R")
+  #source("rfuncts/mnorm_D.R")
   
   ## S = number of iterations, y = data
   ## L = number of kernels

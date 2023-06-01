@@ -9,6 +9,7 @@ library(ggsci)
 library(RSSL)
 library(reshape2)
 library(ggforce)
+library(Rcpp)
 library(RcppArmadillo)
 library(cowplot)
 # moons data
