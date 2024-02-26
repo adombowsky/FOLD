@@ -1,7 +1,7 @@
 ---
 title: "Skew Symmetric Mixture"
-author: "Alexander Dombowsky"
-date: "11/16/2022"
+author: " "
+date: " "
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -105,15 +105,15 @@ grid.arrange(Kplots[[1]],
              Kplots[[3]],
              Kplots[[4]],
              nrow = 2)
-# evaluating number of clusters
-Kmat <- rbind(Klist[[1]],Klist[[2]],Klist[[3]],Klist[[4]])
-m <- mean(Kmat[,1]<=Kmat[,2])
-arimat <- rbind(arilist[[1]],arilist[[2]],arilist[[3]],arilist[[4]])
-m_a <- mean(arimat[,1] >= arimat[,2])
 grid.arrange(ariplots[[1]],
              ariplots[[2]],
              ariplots[[3]],
              ariplots[[4]],
              nrow = 2)
+# evaluating number of clusters
+Kmat <- rbind(Klist[[1]],Klist[[2]],Klist[[3]],Klist[[4]])
+m <- mean(Kmat[,1]<=Kmat[,2])
+arimat <- rbind(arilist[[1]],arilist[[2]],arilist[[3]],arilist[[4]])
+m_a <- mean(arimat[,1] >= arimat[,2])
 ```
 

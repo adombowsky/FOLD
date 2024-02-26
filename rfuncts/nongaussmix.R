@@ -11,7 +11,6 @@ nongauss <- function(n, Pi, xi, Omega, alpha, Mu_1, Sigma_1, Mu, Sigma, p){
   # mu, sigma = normal parameters
   # shape, rate = gamma parameters
   require(sn)
-  require(mvtnorm)
   K <- 4
   s <- sample(1:K, size = n, replace = T, prob = Pi)
   x <- (s==1) * rmsn(n=n, xi = xi[1,], Omega = Omega[,,1], alpha = alpha[1,]) +

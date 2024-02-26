@@ -22,19 +22,3 @@ getcGsamps_loc <- function(theta, Sigma, w, d, max.k) {
   cgsamps <- t(apply(theta, 3, function(x) makecG_loc(x, Sigma=Sigma, w=w, d=d, max.k=max.k)))
   return(cgsamps)
 }
-
-#cGball <- function(c.fold, cgsamps){
-#  require(mcclust)
-#  require(mcclust.ext)
-  # credible ball
-#  cb <- credibleball(c.fold,cgsamps)
-#  return(cb)
-#}
-
-#cGpsm <- function(cgsamps){
-#  require(mcclust)
-#  require(mcclust.ext)
-  # credible ball
-#  cb <- mcclust::comp.psm(cgsamps)
-#  return(cb)
-#}

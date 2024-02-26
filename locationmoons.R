@@ -1,4 +1,3 @@
-### file to make all figures in main paper related to moons data ###
 # packages
 library(sn)
 library(ggplot2)
@@ -9,7 +8,6 @@ library(ggsci)
 library(RSSL)
 library(reshape2)
 library(ggforce)
-library(Rcpp)
 library(RcppArmadillo)
 library(cowplot)
 # moons data
@@ -25,14 +23,14 @@ source("rfuncts/loc_foldball.R")
 sourceCpp("rcppfuncts/locnorm_D_arma.cpp")
 S <- 35000 # iterations
 B <- 1000 # burnin
-L <- 30 # components
-sig_sq <- 0.02 # diagonal covariance term
+L <- 30 # og = 30
+sig_sq <- 0.02 # og = 0.04, best = 0.02, obviously
 Sigma <- sig_sq*diag(1,d)
 # fitting
 fit <- loc_mvnorm_gibbs(S = S,
                     y = y,
                     L = L,
-                    alpha = rep(1/L,L),
+                    alpha = rep(1/L,L), # rep((d/2)+2,L)
                     mu_0 = rep(0,d),
                     Sigma_0 = diag(2,d),
                     Sigma = Sigma,
@@ -48,13 +46,13 @@ trip_ind <- seq(4,M,by=4)
 theta <- theta[,,trip_ind]
 z <- z[trip_ind,]
 # cluster
-# VI
+# W & G estimate -- VI
 c.psm <- mcclust::comp.psm(z)
 c.mv <- mcclust.ext::minVI(psm = c.psm,
                            cls.draw = z,
                            max.k = 10)
 c.VI <- c.mv$cl
-# Binder's
+# W & G estimate -- VI
 c.mv <- mcclust::minbinder(psm = c.psm,
                            cls.draw = z,
                            max.k = 10)
@@ -75,11 +73,12 @@ for (h in 1:max.k){
   labs[h,] = cutree(cl, k = h)
 }
 w_avg <- sum(Delta_UT)/(sum(1 - Delta_UT))
+gamma_med <- median(Delta_UT)
+w_med = gamma_med/(1-gamma_med)
 losses <- apply(labs, 1, mergeloss, Delta_lt = Delta_H[lower.tri(Delta_H)], w=w_avg)
-# default value
+# minimize
 min_loss <- which.min(losses)
 #c.fold = labs[min_loss,]
-# setting equal to number of crescents
 c.fold = labs[2,]
 # plotting with Binder's Loss
 cluster.df <- data.frame(y1 = y[,1],
@@ -95,7 +94,7 @@ cluster.df %>%
         axis.ticks = element_blank(),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
-# elbow plot
+# choosing number of clusters
 tv <- c()
 h_bar <- sum(Delta_H[lower.tri(Delta_H)])
 for (k in 1:max.k){
@@ -125,6 +124,23 @@ cluster.df %>%
         axis.ticks = element_blank(),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
+# display Hellinger matrix
+## re-label c.fold by size
+c.fold.ordered <- order(labs[2,])
+Delta.ordered <- 1-Delta_H[c.fold.ordered, c.fold.ordered]
+melt.delta <- melt(Delta.ordered)
+hdmat = ggplot(data = melt.delta, aes(x = Var1, y = rev(Var2), fill = value)) +
+  geom_tile() + scale_fill_distiller(palette = "YlOrBr") +
+  xlab("") + ylab("") + labs(title = "Hellinger Distance Matrix (ordered by FOLD)") +
+  theme_bw()
+c.VI.ordered <- order(c.VI)
+psm.ordered <- c.psm[c.VI.ordered, c.VI.ordered]
+melt.psm <- melt(psm.ordered)
+psm = ggplot(data = melt.psm, aes(x = Var1, y = rev(Var2), fill = value)) +
+  geom_tile() + scale_fill_distiller(palette = "YlOrBr") +
+  xlab("") + ylab("") + labs(title = "Posterior Similiarity Matrix (ordered by minVI)") +
+  theme_bw()
+#grid.arrange(hdmat, psm)
 # plotting theta
 theta_bar = rowMeans(theta, dims = 2)
 df.bar <- data.frame(y1 = y[,1], y2=y[,2],
@@ -134,7 +150,6 @@ df.bar <- data.frame(y1 = y[,1], y2=y[,2],
 df.bar %>%
   ggplot(aes(x = y1, y = y2)) + geom_point(color = "red") +
   geom_point(aes(x = t1, y = t2), color = "blue")
-# plotting localized densities
 alpha <- 0.95
 rad <- sqrt(qchisq(alpha, df = d))
 df.bar$radius <- rep(sqrt(sig_sq)*rad,n) # get 95% density region
@@ -265,6 +280,7 @@ df.bar %>%
         panel.grid.minor = element_blank(),
         legend.key.size = unit(1.5, 'cm'),
         text = element_text(size=15))
+# with different shapes
 # with different allocations
 omega_clusters <- matrix(0, nrow = 6, ncol = n)
 # hard coding levels of clusters for plot consistency
@@ -302,11 +318,12 @@ df.bar %>%
         panel.grid.minor = element_blank(),
         legend.key.size = unit(1.5, 'cm'),
         text = element_text(size=15))
+
 # credible ball and cGPSM
 heights <- rev(cl$height)[1:max.k]
 w_vals <- heights/(1-heights)
-cgsamps <- getcGsamps_loc(theta=theta, w=w_vals[3], d=2, max.k=10, Sigma=Sigma) # to match figure in main article
-# cgsamps <- read.csv("output/cells/cgsamps.csv")
+cgsamps <- getcGsamps_loc(theta=theta, w=w_vals[3], d=2, max.k=10, Sigma=Sigma)
+#cgsamps <- read.csv("output/cells/cgsamps.csv")
 cb <- cGball(labs[3,],cgsamps)
 foldpsm <- cGpsm(cgsamps)
 # plot PSM
@@ -349,8 +366,7 @@ foldcl <- ggplot(ball.df, aes(x = X1, y = X2, color = cfold)) + geom_point() +
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         plot.caption = element_text(hjust=0.5))
-horizcl <- ggplot(ball.df, aes(x = X1, y = X2, color = choriz)) + geom_point() + 
-  labs(caption="95% credible ball horizontal bound.", color = "Cluster", title = " ") + 
+horizcl <- ggplot(ball.df, aes(x = X1, y = X2, color = choriz)) + geom_point() + labs(caption="95% credible ball horizontal bound.", color = "Cluster", title = " ") + 
 xlab(" ") + ylab(" ") +
   scale_color_brewer(palette="Dark2")+
   theme_bw() + 
@@ -364,8 +380,7 @@ xlab(" ") + ylab(" ") +
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         plot.caption = element_text(hjust=0.5))
-uppervcl <- ggplot(ball.df, aes(x = X1, y = X2, color = c.upperv)) + geom_point() + 
-  labs(caption="95% credible ball vertical upper bound.", color = "Cluster", title = " ") + 
+uppervcl <- ggplot(ball.df, aes(x = X1, y = X2, color = c.upperv)) + geom_point() + labs(caption="95% credible ball vertical upper bound.", color = "Cluster", title = " ") + 
 xlab(" ") + ylab(" ") +
   scale_color_brewer(palette="Dark2")+
   theme_bw() + 
@@ -379,8 +394,7 @@ xlab(" ") + ylab(" ") +
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         plot.caption = element_text(hjust=0.5))
-lowervcl <- ggplot(ball.df, aes(x = X1, y = X2, color = c.lowerv)) + geom_point() + 
-  labs(caption="95% credible ball vertical lower bound.", color = "Cluster", title = " ") +
+lowervcl <- ggplot(ball.df, aes(x = X1, y = X2, color = c.lowerv)) + geom_point() + labs(caption="95% credible ball vertical lower bound.", color = "Cluster", title = " ") +
 xlab(" ") + ylab(" ") +
   theme_bw() + 
   scale_color_brewer(palette="Dark2")+
@@ -394,5 +408,4 @@ xlab(" ") + ylab(" ") +
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         plot.caption = element_text(hjust=0.5))
-# plotting point estimate with credible ball 
 plot_grid(foldcl, horizcl, lowervcl, uppervcl, labels = c("(a)", "(b)", "(c)", "(d)"))

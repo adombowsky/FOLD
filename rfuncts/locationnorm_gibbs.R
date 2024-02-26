@@ -54,9 +54,6 @@ loc_mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), mu_0, Sigma_0, Sigma, st
     # sample mu and Sigma
     for (l in 1:L) {
       if (cluster.sizes[l] == 0) { # for empty clusters, sample from the prior
-        #Sigma[,,l] <- LaplacesDemon::rinvwishart(nu = r, S = C)
-        #Sigma_diag[l, ] <- diag(Sigma[,,l])
-        #Sigma_LT[l, ] <- Sigma[,,l][lower.tri(Sigma[,,l], diag = F)]
         mu[l, ] <- mu_0 + chol(Sigma_0) %*% rnorm(p)
       } 
       else if (cluster.sizes[l] == 1) {
@@ -66,10 +63,6 @@ loc_mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), mu_0, Sigma_0, Sigma, st
         y_l_bar = y_l
         Sigma_l <- solve(Sigma_0_inv + n_l * Sigma_inv)
         mu_l <- Sigma_l %*% (Sigma_0_inv %*% mu_0 + n_l * Sigma_inv %*% y_l_bar)
-        #C_star <- C +  (n_l * kappa/(n_l + kappa)) * tcrossprod(y_l_bar - w)
-        #Sigma[,,l] <- rinvwishart(nu = n_l + r, S = C_star)
-        #Sigma_diag[l, ] <- diag(Sigma[,,l])
-        #Sigma_LT[l, ] <- Sigma[,,l][lower.tri(Sigma[,,l], diag = F)]
         ## mean sampled
         mu[l,] <- mu_l + chol(Sigma_l) %*% rnorm(p)
       }
@@ -80,10 +73,6 @@ loc_mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), mu_0, Sigma_0, Sigma, st
         y_l_bar = colMeans(y_l)
         Sigma_l <- solve(Sigma_0_inv + n_l * Sigma_inv)
         mu_l <- Sigma_l %*% (Sigma_0_inv %*% mu_0 + n_l * Sigma_inv %*% y_l_bar)
-        #C_star <- C +  (n_l * kappa/(n_l + kappa)) * tcrossprod(y_l_bar - w)
-        #Sigma[,,l] <- rinvwishart(nu = n_l + r, S = C_star)
-        #Sigma_diag[l, ] <- diag(Sigma[,,l])
-        #Sigma_LT[l, ] <- Sigma[,,l][lower.tri(Sigma[,,l], diag = F)]
         ## mean sampled
         mu[l,] <- mu_l + chol(Sigma_l) %*% rnorm(p)
       }
@@ -91,14 +80,6 @@ loc_mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), mu_0, Sigma_0, Sigma, st
     # sample cluster labels
     tau <- locmaketau(Pi = Pi, y = y, mu = mu, Sigma = Sigma)
     z[s,] <- apply(tau, 1, function(x) sample(L, size = 1, replace = T, prob = x))
-    
-    #for (i in 1:n){
-    # for (l in 1:L) {
-    # tau[l] <- log(Pi[l]) + mclust::dmvnorm(data=matrix(y[i,],nrow = 1), mean=matrix(mu[l,],nrow = 1), sigma=Sigma[,,l],log=T)
-    #}
-    # tau <- exp(tau - max(tau))
-    # z[s,i] <- sample(1:L, size = 1, replace = T, prob = tau)
-    #}
     # sub-sampling for theta samples
     z_mat <- model.matrix(~ -1 + cl, data = data.frame(cl = factor(z[s,], levels = 1:L)))
     total_pars <- cbind(mu)

@@ -1,5 +1,3 @@
-### simulation study given in the Supplementary Material ###
-# see the file "clusterspirals.R" in the "rfuncts" folder for one replication 
 # packages
 library(grid)
 library(gridExtra)
@@ -40,7 +38,8 @@ x <- foreach(r = 1:R,
                            "makeHellingerAvg")) %dopar% {
                              clusterspirals(N=N)
                            }
-sims <- matrix(unlist(x), ncol = 3, byrow=TRUE)
+sims <- matrix(unlist(x), ncol = 4, byrow=TRUE)
+#write.csv(sims, "experiments/spirals/simsv3.csv",row.names=F)
 sims_means <- colMeans(sims)
 round(sims_means,3)
 sims_sd <- apply(sims, 2, sd)

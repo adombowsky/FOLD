@@ -1,13 +1,8 @@
 clusterspirals <- function(N) {
   # N = c(300,200,100)
   # packages
-  library(sn)
-  library(ggplot2)
   library(dplyr)
   library(mcclust.ext)
-  library(RColorBrewer)
-  library(ggsci)
-  library(kernlab)
   library(reshape2)
   library(KODAMA)
   # moons data
@@ -22,7 +17,7 @@ clusterspirals <- function(N) {
   sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
   S <- 15000 # iterations
   B <- 1000 # burnin
-  L <- 30 # number of components
+  L <- 30
   sig_sq <- 0.5
   # fitting
   fit <- mvnorm_gibbs(S = S,
@@ -64,16 +59,23 @@ clusterspirals <- function(N) {
   # minimize
   min_loss <- which.min(losses)
   c.fold = labs[min_loss,]
+  # compute credible ball
   # credible ball and cGPSM
   cgsamps <- getcGsamps(theta=theta, w=w_avg, d=2, max.k=10)
+  # cgsamps <- read.csv("output/cells/cgsamps.csv")
+  # cgsamps <- as.matrix(cgsamps)
   cb <- cGball(c.fold,cgsamps)
   # compare clusterings
   vi.fold <- mcclust::vi.dist(c.fold, truth)
+  k_horiz <- length(table(cb$c.horiz[1,]))
+  k_uv <- length(table(cb$c.uppervert[1,]))
+  k_lv <- length(table(cb$c.lowervert[1,]))
   # evaluations
   inc <- vi.fold <= cb$dist.horiz
+  k_int <- (K_0 <= k_lv) & (K_0 >= k_uv) 
   k_fold <- length(table(c.fold))
   ari_fold <- adjustedRandIndex(c.fold, truth)
-  logic_vec <- c(inc, k_fold, ari_fold)
-  names(logic_vec) = c("Ball", "K_FOLD", "ARI")
+  logic_vec <- c(inc, k_int, k_fold, ari_fold)
+  names(logic_vec) = c("Ball", "K_interval", "K_FOLD", "ARI")
   return(logic_vec)
 }

@@ -1,23 +1,20 @@
-### file to make Figure 1 in intro of main paper ###
 # packages
 library(sn)
 library(ggplot2)
 library(dplyr)
 library(mcclust.ext)
 library(RColorBrewer)
-library(ggsci)
 library(Rcpp)
 library(RcppArmadillo)
 library(mvtnorm)
 # functions
-# sample two component Gaussian mixture
+# sample Multivariate Normal
 multivar.gmm <- function(n, p, Mu, Sigma){
   s <- sample(1:2, size = n, replace = T, prob = c(p,1-p))
   x <- (s==1) * rmvnorm(n = n, mean = Mu[1,], sigma = Sigma[,,1]) +
     (s==2) * rmvnorm(n=n, mean = Mu[2,], sigma = Sigma[,,2])
   return(x)
 }
-# sample from skew-symmetric mixture
 nongauss <- function(n, Pi, xi, Omega, alpha, Mu_1, Sigma_1, Mu, Sigma, p){
   # omega = vector of probabilties for mixture
   # p_mix, mu_mix, sigma_mix = parameters for 3 component mixture
@@ -56,12 +53,12 @@ source("rfuncts/mnorm_D_apply.R")
 sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
 S <- 25000 # iterations
 B <- 1000 # burnin
-L <- 10 # components
+L <- 10
 # fitting
 fit <- mvnorm_gibbs(S = S,
                     y = y,
                     L = L,
-                    alpha = rep(1/L,L),
+                    alpha = rep(1/L,L), # rep((d/2)+2,L)
                     w = rep(0,d),
                     kappa = 1,
                     r = d+2,

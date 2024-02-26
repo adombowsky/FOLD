@@ -19,8 +19,8 @@ mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), w, kappa, r, C, stops = 1){
   Rcpp::sourceCpp("rcppfuncts/clusterlabs_arma.cpp")
   
   # r functions
-  #source("rfuncts/mnorm_hellinger.R")
-  #source("rfuncts/mnorm_D.R")
+  source("rfuncts/mnorm_hellinger.R")
+  source("rfuncts/mnorm_D.R")
   
   ## S = number of iterations, y = data
   ## L = number of kernels
@@ -67,9 +67,6 @@ mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), w, kappa, r, C, stops = 1){
         n_l = sum(z[s-1,]==l)
         y_l_bar = y_l
         ## covariance matrix sampled
-        # V <- y_l - matrix(rep(y_l_bar,n_l), nrow = n_l, byrow = T)
-        # V <- crossprod(data.matrix(V))
-        # C_star <- C +  V + (n_l * r/(n_l + r)) * tcrossprod(y_l_bar - w)
         C_star <- C +  (n_l * kappa/(n_l + kappa)) * tcrossprod(y_l_bar - w)
         Sigma[,,l] <- rinvwishart(nu = n_l + r, S = C_star)
         Sigma_diag[l, ] <- diag(Sigma[,,l])
@@ -98,15 +95,6 @@ mvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), w, kappa, r, C, stops = 1){
     # sample cluster labels
     tau <- maketau(Pi = Pi, y = y, mu = mu, Sigma = Sigma)
     z[s,] <- apply(tau, 1, function(x) sample(L, size = 1, replace = T, prob = x))
-    
-    #for (i in 1:n){
-      # for (l in 1:L) {
-        # tau[l] <- log(Pi[l]) + mclust::dmvnorm(data=matrix(y[i,],nrow = 1), mean=matrix(mu[l,],nrow = 1), sigma=Sigma[,,l],log=T)
-      #}
-      # tau <- exp(tau - max(tau))
-      # z[s,i] <- sample(1:L, size = 1, replace = T, prob = tau)
-    #}
-    # sub-sampling for theta samples
     z_mat <- model.matrix(~ -1 + cl, data = data.frame(cl = factor(z[s,], levels = 1:L)))
     total_pars <- cbind(mu, Sigma_diag, Sigma_LT)
     theta[[s]] <- z_mat %*% total_pars

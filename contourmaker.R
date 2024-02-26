@@ -1,9 +1,6 @@
-### file to make contour plots of densities used in the simulation study ###
-# packages
 require(mvtnorm)
 require(sn)
 require(ggplot2)
-require(cowplot)
 # normals
 d.gaussmix <- function(x, mu, Sigma, Pi){
   fx <- Pi[1] * mvtnorm::dmvnorm(x=x, mean = mu[1,], sigma = Sigma[,,1]) +
@@ -105,4 +102,3 @@ skewsymm_contours = ggplot(xgrid, aes(x = x1, y = x2, z = x3)) + geom_contour() 
   theme(text = element_text(size = 14),
         title = element_text(size = 16)) +
   theme_bw()
-plot_grid(normal_contours, skewnormal_contours, skewsymm_contours, ncol = 1, labels = c("(a)", "(b)", "(c)"))

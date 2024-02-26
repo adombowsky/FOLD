@@ -1,7 +1,7 @@
 ---
 title: "Mixture of Multivariate Normals"
-author: "Alexander Dombowsky"
-date: "11/16/2022"
+author: " "
+date: " "
 output: html_document
 ---
 
