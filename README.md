@@ -2,11 +2,10 @@
 This is the GitHub repository for Bayesian Clustering via Fusing of Localized Densities. In this article, we present Fusing of Localized Densities (FOLD), a decision theoretic clustering method that focuses on grouping the _localized densities_ from a mixture model. Here, you will find the code required to reproduce all plots, the simulation studies, and the application to the cell line dataset. Here is a quick summary of what files are included in this repository.
 
 ## Code for Reproducing Results
-* The skew-symmetric mixture simulation study (Section 4.1, Supplement Figure A.4): ```SimStudy_nongauss.Rmd```.
-* Application to the GSE81861 cell line dataset (Section 4.2, Figures 4-6, Supplement Figure H.7): ```cells.R```.
-* Gaussian mixture and skew Gaussian mixture simulation studies (Supplement Section A, Figures A.2-A.3): ```SimStudy_mvn.Rmd``` and ```SimStudy_mvsn.Rmd```.
-* Illustration of oracle clusterings (Supplement Section B, Figures B.5 and B.6): ```convergence_plots.R```.
-* Credible ball simulation study (Supplement Section I): ```simulatespirals.R```. 
+* Application to the GSE81861 cell line dataset (Figures 4-6, Supplement Figure H.7): ```cells.R```.
+* Gaussian mixture, skew Gaussian mixture, and skew-symmetric mixture simulation studies (Figures A.2-A.4): ```SimStudy_mvn.Rmd```, ```SimStudy_mvsn.Rmd```, and ```SimStudy_nongauss.Rmd```, respectively.
+* Illustration of oracle clusterings (Figures B.5 and B.6): ```convergence_plots.R```.
+* Credible ball simulation study: ```simulatespirals.R```. 
 
 ## Code for Reproducing Additional Figures
 * Example of over-clustering (Figure 1): ```introexample.R```.
