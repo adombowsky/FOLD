@@ -1,0 +1,27 @@
+Package: fold
+Title: Fusing of Localized Densities: a Bayesian clustering method 
+  for misspecified models
+Version: 0.0.0.9000
+Author: Alexander Dombowsky
+Maintainer: The package maintainer <alexander.dombowsky@duke.edu>
+Description: This package contains the functions required to implement the 
+  FOLD clustering method for Bayesian Gaussian mixture models as described in
+  Dombowsky and Dunson (2023+). "Bayesian Clustering via Fusing of 
+  Localized Densities".
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+  Rcpp (>= 1.0.5),
+  RcppArmadillo (>= 0.12.8.4.0),
+  LaplacesDemon,
+  mcclust,
+  sn
+LinkingTo: Rcpp, RcppArmadillo
+Suggests:
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Depends: 
+  R (>= 4.1.0)

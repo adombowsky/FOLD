@@ -1,9 +1,9 @@
 # packages
-library(cowplot)
-library(mclust)
-library(RColorBrewer)
+require(cowplot)
+require(mclust)
+require(RColorBrewer)
 # sourcing function
-source("rfuncts/convergence_line.R")
+source("extra_R/convergence_line.R")
 l1 <- convergence_line(n=100,seed=1,S=20000)
 l2 <- convergence_line(n=250,seed=1,S=20000)
 l3 <- convergence_line(n=500,seed=1,S=20000)

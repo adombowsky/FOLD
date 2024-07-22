@@ -1,25 +1,18 @@
 # packages
+library(fold)
 library(grid)
 library(gridExtra)
 library(Rcpp)
 library(RcppArmadillo)
 library(foreach)
 library(doParallel)
-library(plyr)
-library(dplyr)
-library(reshape2)
 # r functions
-source("rfuncts/mvnorm_gibbs.R")
-source("rfuncts/mnorm_D_apply.R")
-source("rfuncts/mergeloss.R")
-source("rfuncts/clusterspirals.R")
-source("rfuncts/foldball.R")
-sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
+source("extra_R/clusterspirals.R")
 # parallel computing
 n.cores <- 10
 ## create the cluster
 my.cluster <- parallel::makeCluster(
-  n.cores, 
+  n.cores,
   type = "PSOCK"
 )
 ## register it to be used by %dopar%
@@ -28,18 +21,18 @@ doParallel::registerDoParallel(cl = my.cluster)
 N <- 300
 R <- 100
 x <- foreach(r = 1:R,
-             .packages = c("mcclust", "Rcpp", "cluster", "KODAMA", "mcclust.ext"),
-             .noexport = c("ldmvnorm_arma",
-                           "maketau",
-                           "makeSigma",
-                           "makeSigmacube",
-                           "makeSigmaDet",
-                           "mnorm_D_arma",
-                           "makeHellingerAvg")) %dopar% {
+             .packages = c("mcclust", "Rcpp", "cluster", "KODAMA", "mcclust.ext", "fold")#,
+             # .noexport = c("ldmvnorm_arma",
+             #               "maketau",
+             #               "makeSigma",
+             #               "makeSigmacube",
+             #               "makeSigmaDet",
+             #               "mnorm_D_arma",
+             #               "makeHellingerAvg")
+             ) %dopar% {
                              clusterspirals(N=N)
                            }
 sims <- matrix(unlist(x), ncol = 4, byrow=TRUE)
-#write.csv(sims, "experiments/spirals/simsv3.csv",row.names=F)
 sims_means <- colMeans(sims)
 round(sims_means,3)
 sims_sd <- apply(sims, 2, sd)

@@ -1,0 +1,542 @@
+---
+title: "Cell Line Application"
+author: "Alexander Dombowsky"
+date: "11/10/2022"
+output: html_document
+---
+
+# Dependencies
+Before we begin the analysis, we install the extra dependencies we will need for the application, then load these along with the ```fold``` package. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("dependencies.R")
+library(fold) # our R package
+library(Rcpp)
+library(RcppArmadillo)
+library(ggplot2)
+library(mclust)
+library(mcclust)
+library(mcclust.ext)
+library(grid)
+library(gridExtra)
+library(plyr)
+library(dplyr)
+library(reshape2)
+library(scran)
+library(scuttle)
+library(M3Drop)
+library(latex2exp)
+library(cowplot)
+library(uwot)
+source("extra_r/simple_SALSO.R")
+source("extra_r/salso_parallel.R")
+sourceCpp("extra_src/salso.cpp")
+```
+
+# Introduction and Background
+In this document, we will reproduce the results presented in Section 4 of "Bayesian Clustering via Fusing of Localized Densities." The GSE81861 Cell Line dataset is available to access on the [Gene Expression Omnibus](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE81861) under the name "GSE81861\_Cell\_Line\_COUNT.csv.gz". We include this file in the repository as "data/cells.csv". We summarize the data below:
+
+* Size: 57,241 rows, 562 columns
+* Rows correspond to genes, columns correspond to human cell line samples. 
+* Entries are the counts for each gene (positive integer valued).
+* Cell lines are A549, GM12878, H1437, HCT116, IMR90, H1, and K562. Each corresponds to a different cancer.
+* Note that each sample name (i.e., the column names) contains the corresponding cell line identifier. 
+* The gene names are listed in the first column of the data.
+
+Our goal is to reproduce the true cell line labels using only the count data. The main hypothesis of such analyses is that differences between the different cell lines, or cancers, will lead to differences in the distribution of genes. This motivates using clustering algorithms to infer the cell types. 
+
+# Loading and Pre-Processing
+First, we apply standard pre-processing procedures to the cell line data using Bioconductor, consisting of creating a SingleCellExperiment file, removing low count cells, normalizing the data with SCRAN, and creating a vector with the true cell type labels. Finally, we take the pre-processed cell line data and perform PCA, projecting the data onto the first $d=5$ principal components. The final data object is denoted as X, a $519 \times 5$ matrix.
+
+```{r}
+cells_csv <- read.csv("data/cells.csv")
+cells <- as.matrix(cells_csv[,-1])
+# creating a SingleCellExperiment file
+cells <- SingleCellExperiment(list(counts=cells))
+# remove low count cells
+qcstats <- perCellQCMetrics(cells)
+qcfilter <- quickPerCellQC(qcstats)
+cells <- cells[,!qcfilter$discard]
+# perform SCRAN normalization
+clusters <- quickCluster(cells)
+cells <- computeSumFactors(cells, clusters=clusters)
+cells <- logNormCounts(cells, log = T) 
+data <- cells@assays@data@listData$logcounts
+norm_data <- M3DropConvertData(data,
+                               is.log = T)
+norm_data <- as.data.frame(norm_data)
+cellnames <- colnames(norm_data)
+norm_data <- unname(norm_data)
+drop_data <- M3DropFeatureSelection(norm_data, mt_method="fdr", mt_threshold=0.01)
+genes <- drop_data$Gene
+data <- norm_data[genes,]
+n <- ncol(data)
+# configuring type names
+dictionary <- c("_A549_","_GM12878_", "_H1437_", "_HCT116_", "_IMR90_", "_H1_", "_K562_")
+K <- length(dictionary)
+types <- matrix(0, nrow = n, ncol = K)
+for (k in 1:K) {
+  types[,k] <- k * grepl(dictionary[k], cellnames)
+}
+types <- rowSums(types)
+
+# taking PCA
+p <- 5
+dpc <- prcomp(t(data), rank. = p, scale. = T)
+X <- scale(dpc$x)
+n <- nrow(X)
+```
+
+# Running MCMC
+Next, we fit a Bayesian GMM to X. We assume that the prior parameters follow Gaussian-Inverse-Wishart prior. The function ```mvnorm_gibbs()``` runs a simple Gibbs sampler for the GMM. After running the Gibbs sampler, we extract the localized atoms (```theta```) and component labels (```z```). We remove some initial MCMC iterations as burn-in and thin the remaining samples.
+
+```{r}
+S <- 25000 # total number of iterations
+B <- 1000 # initial iterations discarded as burn-in
+L <- 50 # number of mixture components
+set.seed(2001)
+# fitting
+fit <- mvnorm_gibbs(S = S,
+                    y = X,
+                    L = L,
+                    alpha = rep(1/2,L), 
+                    w = rep(0,p),
+                    kappa = 1,
+                    r = p+2,
+                    C = diag(1,p), 
+                    stops = 1000)
+# discarding initial samples as burn-in
+theta <- fit$theta[-(1:B)] 
+z <- fit$z[-(1:B),]
+# thinning remaining iterations
+trip_ind <- seq(4,nrow(z),by=4)
+theta <- theta[trip_ind] # localized atoms
+z <- z[trip_ind,] # component labels
+```
+
+
+# Obtaining Model-Based Clustering Point Estimates
+
+The next step in the procedure is to produce the posterior expected Hellinger distance matrix $\Delta$. This is achieved by applying the function "makeHellingerAvg", which computes a separate Hellinger distance matrix for each MCMC iteration, then takes the average of these matricies. The output is the upper triangle of $\Delta$ (the distance matrix is symmetric). After creating $\Delta$, we generate candidate partitions using average-linkage hierarchical clustering.
+
+```{r}
+# apply hellinger distance function
+Delta <- comp_delta(theta=theta, p=p, n=n)
+
+# choose candidate set
+cl_hierarchy <- hclust(as.dist(Delta), method = "average" ) # average-linkage
+max.k <- 24 # maximum number of clusters
+candidates <- matrix(0, nrow = max.k, ncol = n) # matrix of candidates, a "tree"
+for (h in 1:max.k) {
+  candidates[h,] <- cutree(cl_hierarchy, k = h)
+}
+
+```
+
+We now obtain point estimates for several kinds of model-based clustering methods.
+
+```{r}
+# W & G estimate -- VI loss
+c.psm <- comp.psm(z)
+c.mv <- minVI(psm = c.psm,
+              cls.draw = z,
+              max.k = max.k)
+c.VI <- c.mv$cl
+# W & G estimate -- Binder's Loss
+c.b <- minbinder(psm = c.psm,
+              cls.draw = z,
+              max.k = max.k)
+c.Binder <- c.b$cl
+# Mclust
+mcl <- Mclust(X, G = 1:24)
+```
+
+Next, we create the elbow plot for FOLD and use it to select a point estimate. The following code recreates Figure 4, then chooses a clustering with $6$ clusters. Note that we can construct a similar plot directly in the ```fold``` package using the ```elbow()``` function.
+
+```{r}
+# Elbow Plot using GGplot
+W <- seq(0,250,by=2) # grid of omega values to search over
+tv <- c()
+h_bar <- sum(Delta[lower.tri(Delta)]) 
+for (k in 1:max.k){
+  wss <- c()
+  for (h in 1:k) {
+    Delta_h <- Delta[candidates[k,]==h, candidates[k,]==h]
+    wss[h] <- sum(Delta_h[lower.tri(Delta_h)])
+  }
+  tv[k] <- sum(wss)/h_bar
+}
+elb_df <- data.frame(Size = 1:max.k,
+                     TV = tv)
+ggplot(elb_df, aes(x = Size, y  = TV)) + geom_line() + geom_point() + 
+  labs(title = "Elbow Plot") +
+  xlab("No. of Clusters") +
+  ylab(latex2exp::TeX("$r_{\\omega}$")) +
+  scale_x_discrete(limits = as.character(1:max.k)) +
+  theme_bw() +
+  theme(text = element_text(size=18))
+c.fold = candidates[6,]
+```
+
+We also implement a version of the [SALSO algorithm](https://www.tandfonline.com/doi/full/10.1080/10618600.2022.2069779) for FOLD. The following code compares the risk between the point estimate selected by SALSO and the point estimate created by hierarchical clustering. We find that the latter tends to have lower risk than the former.
+
+```{r}
+# alternatively, using SALSO
+c.salso = salso_parallel(M=150, # number of parallel runs
+                        Delta=Delta, # Hellinger distances
+                        omega = 25) # omega value
+## compare risk value
+fold_risk(c=c.fold, Delta = Delta, omega = 25)/choose(n,2) # risk of hierarchical clustering
+fold_risk(c=c.salso, Delta = Delta, omega = 25)/choose(n,2) # risk of SALSO
+```
+
+With our model-based point estimates obtained, we move on to displaying the results and comparing to the true cell types. This next code creates Figure 5.
+
+```{r}
+# plot with UMAP
+set.seed(2001)
+umapped_cells <- uwot::umap(t(data), 
+                            min_dist = 0.8)
+types <- as.factor(types)
+levels(types) <- c("A5A9", "GM12878", "H1437", "HCT116",
+                   "IMR90", "H1", "K562")
+umapped_df <- data.frame(umapped_cells,
+                         c.VI = factor(c.VI),
+                         c.Binder <- factor(c.Binder),
+                         c.Mclust= factor(mcl$classification),
+                         c.fold = factor(c.fold),
+                         types = factor(types))
+colnames(umapped_df)[1:2] <- c("UMAP1", "UMAP2")
+gg_truth <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = types)) + geom_point() + 
+  labs(caption = "The true cell types.", color = "Types", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+gg_VI <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.VI)) + geom_point() + 
+  labs(caption = "Clusters given by minimizing the VI and Binder's loss.", color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+gg_mclust <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.Mclust)) + geom_point() + 
+  labs(caption = "Clusters given by Mclust.", color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+gg_fold <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.fold)) + geom_point() + 
+  labs(caption = latex2exp::TeX("Clusters given by FOLD."), color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+#grid.arrange(gg_truth, gg_fold, gg_VI, gg_mclust, nrow = 2)
+plot_grid(gg_truth, gg_fold, gg_VI, gg_mclust, labels = c('(a)', '(b)', '(c)', '(d)'))
+```
+
+The next chunk of code creates a plot of $\Delta$ using a heat map, where the entries are ordered by the FOLD estimate. In addition, we do the same but with the PSM, where entries are ordered by the VI estimate.
+
+```{r}
+# hellinger distance matrix
+## re-label c.fold by size
+library(reshape2)
+library(latex2exp)
+c.fold.ordered <- order(c.fold)
+Delta.ordered <- 1-Delta[c.fold.ordered, c.fold.ordered]
+melt.delta <- melt(Delta.ordered)
+hdmat = ggplot(data = melt.delta, aes(x = Var1, y = rev(Var2), fill = value)) +
+  geom_tile() + scale_fill_distiller(palette = "YlOrBr")  +
+  xlab("") + ylab("") + labs(title = "Hellinger Similarity Matrix",
+                             fill = TeX("$1-\\Delta_{ij}$")) +
+  theme_bw() + 
+  theme(axis.line = element_blank(),
+    legend.position = "left",
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank())
+# posterior similiarty matrix
+c.VI.ordered <- order(c.VI)
+psm.ordered <- c.psm[c.VI.ordered, c.VI.ordered]
+melt.psm <- melt(psm.ordered)
+psm = ggplot(data = melt.psm, aes(x = Var1, y = rev(Var2), fill = value)) +
+  geom_tile() + scale_fill_distiller(palette = "YlOrBr") +
+  xlab("") + ylab("") + labs(title = "Posterior Similiarity Matrix",
+                             fill = TeX("$\\Pi(s_i = s_j | X)$")) +
+    theme_bw() + 
+  theme(axis.line = element_blank(),
+    legend.position = "right",
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank())
+grid.arrange(hdmat, psm, nrow = 1)
+```
+
+# Uncertainty Quantification
+
+We now create a credible ball for FOLD. First, we extract the posterior samples of $\boldsymbol c_{\boldsymbol \theta}$, given in equation (6) of the main article, then calculate the credible ball.
+
+```{r}
+# credible ball and cGPSM
+ctheta_samps <- get_ctheta_samps(theta=theta, omega = 25, p = p, max.k = max.k)
+cb <- ctheta_ball(c_fold = c.fold, ctheta_samps = ctheta_samps)
+```
+
+Figure 6, which displays the point estimate, horizontal bound, and vertical bounds for FOLD, can be created by running the following code chunk.
+
+```{r}
+# credible ball partitions
+ball.df <- data.frame(
+  umapped_cells,
+  cfold = factor(c.fold),
+  choriz = factor(cb$c.horiz[1,]),
+  c.upperv = factor(cb$c.uppervert[1,]),
+  c.lowerv = factor(cb$c.lowervert[1,]))
+foldumap <- ggplot(ball.df, aes(x = X1, y = X2, color = cfold)) + geom_point() + labs(color = "Cluster", caption = latex2exp::TeX("The point estimator, $\\textbf{c}_{\\textrm{FOLD}}.$"), 
+                                                                                      title = " ")  +
+xlab("UMAP1") + ylab("UMAP2") +
+  theme_bw() + 
+  #scale_color_brewer(palette="Dark2")+
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust = 0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    ) 
+#latex2exp::TeX("$\\textbf{c}_{\\textrm{FOLD}}$")
+horizumap <- ggplot(ball.df, aes(x = X1, y = X2, color = choriz)) + geom_point() + labs(caption="95% credible ball horizontal bound.", color = "Cluster", 
+                                                                                        title = " ") +
+xlab("UMAP1") + ylab("UMAP2") +
+  theme_bw() + 
+  #scale_color_brewer(palette="Dark2")+
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust = 0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+uppervumap <- ggplot(ball.df, aes(x = X1, y = X2, color = c.upperv)) + geom_point() + labs(caption="95% credible ball vertical upper bound.", color = "Cluster",
+                                                                                           title = " ")  +
+xlab("UMAP1") + ylab("UMAP2") +
+  theme_bw() + 
+  #scale_color_brewer(palette="Dark2")+
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust = 0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+lowervumap <- ggplot(ball.df, aes(x = X1, y = X2, color = c.lowerv)) + geom_point() + labs(caption="95% credible ball vertical lower bound.", color = "Cluster", title = " ")  +
+xlab("UMAP1") + ylab("UMAP2") +
+  theme_bw() + 
+  #scale_color_brewer(palette="Dark2")+
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust = 0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+#grid.arrange(foldumap, horizumap, lowervumap, uppervumap, nrow=2)
+plot_grid(foldumap, horizumap, lowervumap, uppervumap, labels = c('(a)', '(b)', '(c)', '(d)'))
+```
+
+# Algorithmic Clustering Methods
+
+We also compare our approach to algorithmic clustering methods, including hierarchical clustering (HCA), k-means, DBSCAN, and spectral clustering. This code also creates a UMAP plot using the algorithmic methods, which corresponds to Figure H.7 in the Supplementary Material.
+
+```{r}
+set.seed(2001) # setting same seed for this code chunk
+## competitor: hierarchical clustering
+dist.cells = dist(X, method = "euclidean")
+h.cells = hclust(dist.cells, method = "average")
+c.hc = cutree(h.cells,k=7) # with the correctly specified number of clusters
+umapped_df$c.hc <- as.factor(c.hc)
+gg_hc <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.hc)) + geom_point() + 
+  labs(caption = "Avg. Linkage Hierarchical Clustering.", color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+
+## competitor: k-means
+### first, make elbow plot
+k.max <- 10
+tws <- c()
+for (h in 1:k.max){
+  km <- kmeans(x=X, centers = h)
+  tws[h] <- km$tot.withinss
+}
+# Generate a data frame containing both k and tot_withinss
+elbow_df <- data.frame(
+  k = 1:k.max,
+  tot_withinss = tws
+)
+# Plot the elbow plot
+ggplot(elbow_df, aes(x = k, y = tot_withinss)) +
+  geom_line() + geom_point()+
+  scale_x_continuous(breaks = 1:10)
+km.cells = kmeans(X,centers=7)
+c.km = km.cells$cluster
+umapped_df$c.km <- as.factor(c.km)
+gg_km <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.km)) + geom_point() + 
+  labs(caption = "K-means.", color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+# competitor: dbscan
+library(dbscan)
+# selecting epsilon
+kNNdistplot(X,k=ncol(X)) # suggests epsilon approx equal to 1
+cells.dbs <- dbscan(X, minPts = ncol(X)+1,eps=1)
+c.dbs = cells.dbs$cluster + 1 # for consistent labeling w/ other methods
+umapped_df$c.dbs = factor(c.dbs)
+gg_dbs <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.dbs)) + geom_point() + 
+  labs(caption = "DBSCAN.", color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+
+## competitor: spectral clustering
+k.spec.max = 10
+D.cells = matrix(0, nrow=n, ncol = n)
+dist.cells = dist(X, method = "euclidean")
+bw <- 1 # bandwidth parameter
+gauss.cells = exp(-(dist.cells)^2/bw^2)
+D.cells[lower.tri(D.cells)] = gauss.cells
+D.cells = D.cells + t(D.cells)
+# Laplacian 
+Dg = rowSums(D.cells)
+Lg = diag(Dg) - D.cells
+# eigenvalue decomposition
+evs = eigen(Lg)
+evals = rev(evs$values)
+plot(evals[1:k.spec.max])
+evecs = evs$vectors[,n:1]
+k.spec <- 5
+V <- evecs[,1:k.spec]
+
+# now do k-means
+km.sc <- kmeans(V,centers=k.spec)
+c.sc <- km.sc$cluster
+umapped_df$c.sc = factor(c.sc)
+gg_sc <- umapped_df %>%
+  ggplot(aes(x = UMAP1, y = UMAP2, color = c.sc)) + geom_point() + 
+  labs(caption = "Spectral Clustering.", color = "Cluster", title = " ") + theme_bw() +
+  theme(
+    #axis.line = element_blank(),
+    #    axis.ticks = element_blank(),
+    #    axis.text = element_blank(),
+        text = element_text(size=14),
+        plot.background = element_blank(),
+        plot.caption = element_text(hjust=0.5)
+    #    panel.grid.major = element_blank(),
+    #    panel.grid.minor = element_blank(),
+    #    panel.border = element_blank()
+    )
+
+# plotting all algorithmic methods together (for the supplement)
+plot_grid(gg_hc, gg_km, gg_dbs, gg_sc, labels =c("(a)", "(b)", "(c)", "(d)"))
+
+```
+
+# Adjusted Rand Index of All Methods
+
+Finally, we compute the ARI of all methods to the true cell line labels, which we display in Table 1. FOLD performs the best of the model-based methods, whereas K-means outperforms the other algorithmic methods.
+
+```{r}
+# gives number of clusters and adjusted Rand w/ truth
+summary.df <- data.frame(FOLD=c(adjustedRandIndex(c.fold,types), length(table(c.fold))),
+                         VI = c(adjustedRandIndex(c.VI,types), length(table(c.VI))),
+                         Mclust = c(adjustedRandIndex(factor(mcl$classification),types), length(table(factor(mcl$classification)))),
+                         HC = c(adjustedRandIndex(c.hc,types), length(table(c.hc))),
+                         kmeans = c(adjustedRandIndex(c.km,types), length(table(c.km))),
+                         dbscan = c(adjustedRandIndex(c.dbs,types), length(table(c.dbs))),
+                         spectral = c(adjustedRandIndex(c.sc,types), length(table(c.sc)))
+                          )
+xtable::xtable(summary.df,digits = 3)
+```

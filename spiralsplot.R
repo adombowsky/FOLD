@@ -14,7 +14,7 @@ ggplot(data_df, aes(x=y1, y = y2, color = s0)) + geom_point() + theme_bw() +
   xlab(" ") + ylab(" ") +
   labs(title = " ", caption = "Example of the spirals data.") +
   theme(panel.border = element_blank(),
-        #panel.grid.major = element_blank(), 
+        #panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         legend.position = "none",
         plot.caption = element_text(hjust=0.5),

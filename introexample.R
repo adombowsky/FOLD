@@ -32,20 +32,21 @@ nongauss <- function(n, Pi, xi, Omega, alpha, Mu_1, Sigma_1, Mu, Sigma, p){
 # sampling
 set.seed(1996)
 samp <- nongauss(n = 2000,
-                Pi = c(0.2, 0.3, 0.15, 0.35),
-                xi = matrix(c(2.5,3.5,
-                              0,-3.5), byrow = T, nrow = 2),
-                Omega = array(c(1,0,0,1,5,0,0,2), c(2,2,2)),
-                alpha = matrix(c(-10,15,
-                                 4,-17), byrow = T, nrow = 2),
-                Mu_1 = c(-4,2.5),
-                Sigma_1 = matrix(c(1/2, 1/2, 1/2, 5/2), byrow = T, nrow = 2),
-                Mu = matrix(rnorm(4, mean = 1, sd = 1), nrow = 2),
-                Sigma = array(c(0.2, 0, 0, 0.8, 0.7, 0, 0, 0.6), c(2,2,2)),
-                p = 1/3)
+                 Pi = c(0.2, 0.3, 0.15, 0.35),
+                 xi = matrix(c(2.5,3.5,
+                               0,-3.5), byrow = T, nrow = 2),
+                 Omega = array(c(1,0,0,1,5,0,0,2), c(2,2,2)),
+                 alpha = matrix(c(-10,15,
+                                  4,-17), byrow = T, nrow = 2),
+                 Mu_1 = c(-4,2.5),
+                 Sigma_1 = matrix(c(1/2, 1/2, 1/2, 5/2), byrow = T, nrow = 2),
+                 Mu = matrix(rnorm(4, mean = 1, sd = 1), nrow = 2),
+                 Sigma = array(c(0.2, 0, 0, 0.8, 0.7, 0, 0, 0.6), c(2,2,2)),
+                 p = 1/3)
 s <- samp$s
 y <- samp$data
 y <- scale(y)
+n <- nrow(y)
 d <- 2
 # fitting a GMM
 source("rfuncts/mvnorm_gibbs.R")
@@ -65,14 +66,9 @@ fit <- mvnorm_gibbs(S = S,
                     C = diag(1,d),
                     stops = 50)
 # burn-out
-theta <- fit$theta[-(1:B)]
-M <- length(theta)
-n <- nrow(y)
-theta <- array(unlist(theta), dim = c(n, 2*d + choose(d,2), M))
 z <- fit$z[-(1:B),]
 # thin
-trip_ind <- seq(4,M,by=4)
-theta <- theta[,,trip_ind]
+trip_ind <- seq(4,nrow(z),by=4)
 z <- z[trip_ind,]
 # cluster
 # W & G estimate -- VI
@@ -81,7 +77,7 @@ c.mv <- mcclust.ext::minVI(psm = c.psm,
                            cls.draw = z,
                            max.k = 10)
 c.VI <- c.mv$cl
-# W & G estimate -- VI
+# W & G estimate -- Binder's
 c.mv <- mcclust::minbinder(psm = c.psm,
                            cls.draw = z,
                            max.k = 10)
@@ -99,5 +95,5 @@ cluster.df %>%
         #axis.ticks = element_blank(),
         #panel.border = element_blank(),
         text = element_text(size=13),
-        panel.grid.major = element_blank(), 
+        panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())

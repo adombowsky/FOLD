@@ -1,11 +1,11 @@
-require(mvtnorm)
 require(sn)
+require(mvtnorm)
 require(ggplot2)
 # normals
 d.gaussmix <- function(x, mu, Sigma, Pi){
   fx <- Pi[1] * mvtnorm::dmvnorm(x=x, mean = mu[1,], sigma = Sigma[,,1]) +
     Pi[1] * mvtnorm::dmvnorm(x=x, mean = mu[2,], sigma = Sigma[,,2]) +
-    Pi[1] * mvtnorm::dmvnorm(x=x, mean = mu[3,], sigma = Sigma[,,3]) 
+    Pi[1] * mvtnorm::dmvnorm(x=x, mean = mu[3,], sigma = Sigma[,,3])
   return(fx)
 }
 # parameters
@@ -18,7 +18,7 @@ Pi <- c(0.45, 0.25, 0.3)
 x1 <- seq(-10,10, by = 0.05)
 x2 <- seq(-10,10, by = 0.05)
 xgrid <- expand.grid(x1,x2)
-x3 <- apply(xgrid, 1, d.gaussmix, 
+x3 <- apply(xgrid, 1, d.gaussmix,
             mu=mu,
             Sigma=Sigma,
             Pi=Pi)
@@ -42,7 +42,7 @@ dmsn_mix <- function(x, Pi, xi, Omega, alpha) {
   return(x3)
 }
 xgrid <- expand.grid(x1,x2)
-x3 <- apply(xgrid, 1, dmsn_mix, 
+x3 <- apply(xgrid, 1, dmsn_mix,
             Pi = c(0.45, 0.25, 0.3),
             xi = matrix(c(6.5,5,
                           0,0,
@@ -54,7 +54,7 @@ x3 <- apply(xgrid, 1, dmsn_mix,
 xgrid <- cbind(xgrid, x3)
 colnames(xgrid) <- c("x1", "x2", "x3")
 skewnormal_contours = ggplot(xgrid, aes(x = x1, y = x2, z = x3)) + geom_contour() +
-  labs(title = "Contours of Skew Normal Mixture") + 
+  labs(title = "Contours of Skew Normal Mixture") +
   xlab(" ") + ylab(" ") +
   theme(text = element_text(size = 14),
         title = element_text(size = 16)) +
@@ -72,7 +72,6 @@ d.nongauss <- function(x, Pi, xi, Omega, alpha, Mu_1, Sigma_1, Mu, Sigma, p){
   # p_mix, mu_mix, sigma_mix = parameters for 3 component mixture
   # mu, sigma = normal parameters
   # shape, rate = gamma parameters
-  require(sn)
   x <- Pi[1] * dmsn(x=x, xi = xi[1,], Omega = Omega[,,1], alpha = alpha[1,]) +
     Pi[2] * dmsn(x=x, xi = xi[2,], Omega = Omega[,,2], alpha = alpha[2,]) +
     Pi[3] * mvtnorm::dmvnorm(x=x, mean = Mu_1, sigma = Sigma_1) +
@@ -82,7 +81,7 @@ d.nongauss <- function(x, Pi, xi, Omega, alpha, Mu_1, Sigma_1, Mu, Sigma, p){
 x1 <- seq(-7,7, by = 0.01)
 x2 <- seq(-7,7, by = 0.01)
 xgrid <- expand.grid(x1,x2)
-x3 <- apply(xgrid, 1, d.nongauss, 
+x3 <- apply(xgrid, 1, d.nongauss,
             Pi = c(0.2, 0.3, 0.15, 0.35),
             xi = matrix(c(2.5,3.5,
                           0,-3.5), byrow = T, nrow = 2),

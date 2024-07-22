@@ -1,0 +1,226 @@
+---
+title: "Introduction to FOLD"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(fold) # our r package
+```
+
+# Introduction
+
+In this document, we will showcase the basic workflow for implementing FOLD on two simple examples. We will demonstrate how to use all user-facing functions, including the construction of a point estimate and the credible ball.
+
+# Normal Example
+
+As a starting example, we will simulate some synthetic data from a mixture of univariate normal distributions.
+
+```{r}
+# generating data
+n <- 100
+p <- 1 # univariate case
+set.seed(1) # random number generator
+s <- c(rep(1,n/2), rep(2,n/2))
+y <- c(rnorm(n=n/2, mean = -2.5, sd = 1), c(rnorm(n=n/2, mean = 2.5, sd = 1)))
+hist(y, main = "Histogram of the Data")
+```
+
+We then fit a mixture of univariate normal distributions to this data, which can be accomplished with the function ```unnorm_gibbs()```. We extract the two main attributes: the localized atoms (```theta```), which includes the mean and variance, and the labels (```z```).
+
+```{r}
+S <- 500 # total number of iterations
+B <- 50 # initial iterations discarded as burn-in
+L <- 20 # number of mixture components
+# fitting
+fit <- unorm_gibbs(S = S,
+                    y = y,
+                    L = L,
+                    alpha = rep(1/2,L), 
+                    w = 0,
+                    kappa = 1,
+                    r = 1,
+                    C = 1,
+                    stops = 50)
+# extracting attributes and removing burn-in
+theta <- fit$theta[-(1:B)]
+z <- fit$z[-(1:B),]
+```
+The ```z``` samples are useful for algorithms that use the component labels, such as the ```mcclust``` package. However, we will use the localized atoms ```theta```. We next create the expected Hellinger distance matrix $\Delta$ with the ```comp_delta()``` function. From $\Delta$, we produce a set of candidate partitions using average-linkage hierarchical clustering. 
+
+```{r}
+Delta <- comp_delta(theta=theta, p=p, n=n) # creating Hellinger distance matrix
+cl_hierarchy <- hclust(as.dist(Delta), method = "average" ) # average-linkage
+max.k <- 10 # maximum number of clusters
+candidates <- matrix(0, nrow = max.k, ncol = n) # matrix of candidates, a "tree"
+for (h in 1:max.k) {
+  candidates[h,] <- cutree(cl_hierarchy, k = h)
+}
+```
+
+From the candidates, we can minimize the FOLD risk for any value of $\omega$ using the ```min_risk()```. For example, suppose we set $\omega=1$. As we can see, this estimator corresponds to the truth.
+
+```{r}
+c_one <- min_risk(c=candidates, Delta=Delta, omega=1) # clustering with omega=1
+plot(y,rep(0,n),col=c_one, ylab = " ", xlab = "Data")
+```
+
+In general, we may want to choose a sensible $\omega$ value from the data. We accomplish this using an elbow plot in the ```elbow()``` function. For convenience, we have formulated the ```elbow()``` function to be in terms of the number of clusters.
+
+```{r}
+elbow(tree=candidates,Delta=Delta)
+```
+
+The general idea here is to select the smallest number of clusters for which the plot "bends". As we can see above, this occurs at $2$ clusters, which corresponds to the second candidate clustering. To select a final clustering, which we call ```c_fold```, we just extract the second row of the ```candidates``` matrix.
+
+```{r}
+k <- 2 # number of clusters selected from elbow plot
+c_fold <- candidates[k,]
+plot(y,rep(0,n),col=c_fold, main = "Clustering Point Estimate")
+```
+
+We express uncertainty in the point estimate ```c_fold``` using a 95\% credible ball. To compute the credible ball, we first extract samples from the posterior of $\boldsymbol c_\theta$, a minimizer of the FOLD loss function, using the ```get_ctheta_samps()``` function. Since our point estimate correpsonds to $\omega=1$, we set ```omega=1``` in the function. In general though, to find the corresponding $\omega$ value for a point estimate determined by ```elbow()```, one can search over a grid of $\omega$ values and calculate ```min_risk()``` until the function reproduces the point estimator. Once we have the $\boldsymbol c_\theta$ samples, we can compute the credible ball using the ```ctheta_ball()``` function. 
+
+```{r}
+ctheta_samps <- get_ctheta_samps(theta=theta, omega=1, p=p, max.k = max.k) # c_theta samples
+cb <- ctheta_ball(c_fold=c_fold, ctheta_samps = ctheta_samps) # credible ball
+```
+
+We can summarize the credible ball using the horizontal and vertical bounds. Note that these bounds may not be unique, so they are stored in a matrix. Below we extract the bounds of the credible ball.
+
+```{r}
+c_horiz <- cb$c.horiz # horizontal bound
+c_uppervert <- cb$c.uppervert # upper vertical bound
+c_lowervert <- cb$c.lowervert # lower vertical bound
+```
+
+In this case, the horizontal bound is unique. We now plot the horizontal bound against the data. Observe that it differs from the point estimate, breaking the clusters into smaller sub-clusters.
+
+```{r}
+plot(y,rep(0,n),col=c_horiz[1,], main = "Horizontal Bound")
+```
+
+# Skew-Normal Example 
+As an additional example, we implement FOLD to a mixture of 2-dimensional skew-Normal distributions.
+
+```{r data}
+# function to sample from skew-normal mixture
+multivar.skewed <- function(n, Pi, xi, Omega, alpha){
+  # omega = vector of probabilties for mixture
+  # p_mix, mu_mix, sigma_mix = parameters for 3 component mixture
+  # mu, sigma = normal parameters
+  # shape, rate = gamma parameters
+  K <- 3
+  s <- sample(1:K, size = n, replace = T, prob = Pi)
+  x <- (s==1) * sn::rmsn(n=n, xi = xi[1,], Omega = Omega[,,1], alpha = alpha[1,]) +
+    (s==2) * sn::rmsn(n=n, xi = xi[2,], Omega = Omega[,,2], alpha = alpha[2,]) +
+    (s==3) * sn::rmsn(n=n, xi = xi[3,], Omega = Omega[,,3], alpha = alpha[3,])
+  return(list(data = x, s = s))
+}
+
+# generating data
+n <- 100 # sample size
+set.seed(1) # random number generator
+samp <- multivar.skewed(n =  n,
+                        Pi = c(0.45, 0.25, 0.3),
+                        xi = matrix(c(6.5,5,
+                                      0,0,
+                                      -5,-5), byrow = T, nrow = 3),
+                        Omega = array(c(1,0,0,1,5,0,0,2,3,0,0,1), c(2,2,3)),
+                        alpha = matrix(c(1,1,
+                                      -10,15,
+                                      4,-17), byrow = T, nrow = 3))
+  s <- samp$s # true labels
+  y <- samp$data # data
+  y <- scale(y) # scaled
+  p <- ncol(y) # dimension
+```
+
+As we can see, the data are composed of separated but non-Gaussian clusters. 
+
+```{r}
+plot(y,col=s, main = "Scatter Plot with Clusters")
+```
+
+Next, we apply a Bayesian GMM to this data using the function ```mvnorm_gibbs()```. Again, we extract the two main attributes: the localized atoms (```theta```) and the component labels (```z```).
+
+```{r}
+S <- 500 # total number of iterations
+B <- 50 # initial iterations discarded as burn-in
+L <- 20 # number of mixture components
+# fitting
+fit <- mvnorm_gibbs(S = S,
+                    y = y,
+                    L = L,
+                    alpha = rep(1/2,L), 
+                    w = rep(0,p),
+                    kappa = 1,
+                    r = p+2,
+                    C = diag(1,p),
+                    stops = 50)
+# extracting attributes and removing burn-in
+theta <- fit$theta[-(1:B)]
+z <- fit$z[-(1:B),]
+```
+
+As before, we produce a set of candidate clusterings with ```comp_delta()``` function.
+
+```{r}
+Delta <- comp_delta(theta=theta, p=p, n=n) # creating Hellinger distance matrix
+cl_hierarchy <- hclust(as.dist(Delta), method = "average" ) # average-linkage
+max.k <- 10 # maximum number of clusters
+candidates <- matrix(0, nrow = max.k, ncol = n) # matrix of candidates, a "tree"
+for (h in 1:max.k) {
+  candidates[h,] <- cutree(cl_hierarchy, k = h)
+}
+```
+
+If we set $\omega=1$, we get the following clustering point estimate.
+
+```{r}
+c_one <- min_risk(c=candidates, Delta=Delta, omega=1) # clustering with omega=1
+plot(y,col=c_one) # comparing with the data
+```
+
+The ```elbow()``` function returns the following plot for selecting the number of clusters.
+
+```{r}
+elbow(tree=candidates,Delta=Delta)
+```
+
+Note that the elbow appears at $3$ clusters, hence we select the third candidate to be the point estimate.
+ 
+```{r}
+k <- 3 # number of clusters selected from elbow plot
+c_fold <- candidates[k,]
+plot(y,col=c_fold, main = "Clustering Point Estimate")
+```
+
+We express uncertainty in the point estimate ```c_fold``` using a 95\% credible ball.
+
+```{r}
+ctheta_samps <- get_ctheta_samps(theta=theta, omega=1, p=p, max.k = max.k) # c_theta samples
+cb <- ctheta_ball(c_fold=c_fold, ctheta_samps = ctheta_samps) # credible ball
+```
+
+Then, we extract the bounds of the credible ball.
+
+```{r}
+c_horiz <- cb$c.horiz # horizontal bound
+c_uppervert <- cb$c.uppervert # upper vertical bound
+c_lowervert <- cb$c.lowervert # lower vertical bound
+```
+
+Again, the horizontal bound is unique, which we now display.
+
+```{r}
+plot(y,col=c_horiz[1,], main = "Horizontal Bound")
+```
+

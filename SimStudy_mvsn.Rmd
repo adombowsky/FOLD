@@ -6,7 +6,8 @@ output: html_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(sn)
+source("dependencies.R")
+library(fold) # our R package
 library(ggplot2)
 library(mcclust)
 library(mcclust.ext)
@@ -23,18 +24,13 @@ library(reshape2)
 ```
 
 # Introduction
-This is the simulation study for the mixture of bivariate skew Gaussian kernels. In this example, we repeatedly sample from this mixture, then cluster the data using FOLD, VI, Binder's, and \texttt{mclust}. This implementation is done using the \texttt{foreach} package in order to speed up computation. If you just want to see the results of one replication from this method, see the file "mvsn_cluster.R" in the "rfuncts" folder.
+This is the simulation study for the mixture of bivariate skew Gaussian kernels. In this example, we repeatedly sample from this mixture, then cluster the data using FOLD, VI, Binder's, and \texttt{mclust}. This implementation is done using the \texttt{foreach} package in order to speed up computation. If you just want to see the results of one replication from this method, see the file "mvsn_cluster.R" in the "extra_R" folder.
 
 # Preliminaries
 ```{r}
 # r functions
-source("rfuncts/multivar_skewed.R")
-source("rfuncts/mvnorm_gibbs.R")
-source("rfuncts/mnorm_D_apply.R")
-source("rfuncts/mergeloss.R")
-source("rfuncts/mvsn_cluster.R")
-source("rfuncts/multivar_skewed.R")
-sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
+source("extra_R/multivar_skewed.R")
+source("extra_R/mvsn_cluster.R")
 # parallel computing
 n.cores <- 10
 ## create the cluster
@@ -57,14 +53,15 @@ B <- 1000 # burnin
 L <- 30 # number of fitted components
 x <- foreach(i = 1:length(N)) %:%
   foreach(r = 1:R,
-          .packages = "mcclust",
-          .noexport = c("ldmvnorm_arma",
-                           "maketau",
-                           "makeSigma",
-                           "makeSigmacube",
-                           "makeSigmaDet",
-                           "mnorm_D_arma",
-                           "makeHellingerAvg")) %dopar% {
+          .packages = c("mcclust", "fold")#,
+          # .noexport = c("ldmvnorm_arma",
+          #                  "maketau",
+          #                  "makeSigma",
+          #                  "makeSigmacube",
+          #                  "makeSigmaDet",
+          #                  "mnorm_D_arma",
+          #                  "makeHellingerAvg")
+          ) %dopar% {
   mvsn.cluster(n = N[i],
                S = S,
                B = B,

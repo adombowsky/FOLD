@@ -7,7 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(sn)
+source("dependencies.R")
+library(fold) # our R package
 library(ggplot2)
 library(mcclust)
 library(mcclust.ext)
@@ -24,18 +25,13 @@ library(reshape2)
 ```
 
 # Introduction
-This is the simulation study for the mixture of bivariate Gaussian kernels. In this example, we repeatedly sample from this mixture, then cluster the data using FOLD, VI, Binder's, and \texttt{mclust}. We also have access to the oracle FOLD clusters, so we will also cluster the data using this method. This implementation is done using the \texttt{foreach} package in order to speed up computation. If you just want to see the results of one replication from this method, see the file "mvn_cluster.R" in the "rfuncts" folder.
+This is the simulation study for the mixture of bivariate Gaussian kernels. In this example, we repeatedly sample from this mixture, then cluster the data using FOLD, VI, Binder's, and \texttt{mclust}. We also have access to the oracle FOLD clusters, so we will also cluster the data using this method. This implementation is done using the \texttt{foreach} package in order to speed up computation. If you just want to see the results of one replication from this method, see the file "mvn_cluster.R" in the "extra_R" folder.
 
 # Preliminaries
 ```{r}
 # r functions
-source("rfuncts/mvnorm_gibbs.R")
-source("rfuncts/mnorm_D_apply.R")
-source("rfuncts/mergeloss.R")
-source("rfuncts/mvn_cluster.R")
-source("rfuncts/multivar_normal.R")
-sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
-sourceCpp("rcppfuncts/oracle.cpp")
+source("extra_R/mvn_cluster.R")
+source("extra_R/multivar_normal.R")
 # parallel computing
 n.cores <- 10
 ## create the cluster
@@ -51,22 +47,16 @@ doParallel::registerDoParallel(cl = my.cluster)
 ```{r, warning = F}
 N <- c(100, 500, 1000, 2500) # sample size
 d <- 2 # dimension
-R <- 100 # replications at each n
+#R <- 100 # replications at each n
+R <- 1 # replications at each n
 K_0 <- 3 # number of true mixture components
 S <- 9000 # iterations
 B <- 1000 # burnin
 L <- 30 # number of fitted components
 x <- foreach(i = 1:length(N)) %:%
   foreach(r = 1:R,
-          .packages = c("mcclust", "mclust"),
-          .noexport = c("ldmvnorm_arma",
-                        "maketau",
-                        "makeSigma",
-                        "makeSigmacube",
-                        "makeSigmaDet",
-                        "mnorm_D_arma",
-                        "makeHellingerAvg",
-                        "dmv",
+          .packages = c("mcclust", "mclust", "fold"),
+          .noexport = c("dmv",
                         "hgauss",
                         "makeh",
                         "Deltapair",
