@@ -8,6 +8,9 @@ install.packages("devtools")
 devtools::install_github("adombowsky/FOLD/fold")
 ```
 
+## Introductory Vignette
+We recommend first running the vignette ```fold/vignettes/introduction.Rmd", which demonstrates the user-facing functions in the ```fold``` package.
+
 ## Code for Reproducing Results
 * Application to the GSE81861 cell line dataset (Figures 4-6, Supplement Figure H.7): ```cells.R```.
 * Gaussian mixture, skew Gaussian mixture, and skew-symmetric mixture simulation studies (Figures A.2-A.4): ```SimStudy_mvn.Rmd```, ```SimStudy_mvsn.Rmd```, and ```SimStudy_nongauss.Rmd```, respectively.
