@@ -35,7 +35,7 @@ sourceCpp("extra_src/salso.cpp")
 ```
 
 # Introduction and Background
-In this document, we will reproduce the results presented in Section 4 of "Bayesian Clustering via Fusing of Localized Densities." The GSE81861 Cell Line dataset is available to access on the [Gene Expression Omnibus](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE81861) under the name "GSE81861\_Cell\_Line\_COUNT.csv.gz". We include this file in the repository as "data/cells.csv". We summarize the data below:
+In this document, we will reproduce the results presented in Section 4 of "Bayesian Clustering via Fusing of Localized Densities." The GSE81861 Cell Line dataset is available to access on the [Gene Expression Omnibus](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE81861) under the name "GSE81861_Cell_Line_COUNT.csv.gz". We include this file in the repository as "data/cells.csv". We summarize the data below:
 
 * Size: 57,241 rows, 562 columns
 * Rows correspond to genes, columns correspond to human cell line samples. 
@@ -47,7 +47,7 @@ In this document, we will reproduce the results presented in Section 4 of "Bayes
 Our goal is to reproduce the true cell line labels using only the count data. The main hypothesis of such analyses is that differences between the different cell lines, or cancers, will lead to differences in the distribution of genes. This motivates using clustering algorithms to infer the cell types. 
 
 # Loading and Pre-Processing
-First, we apply standard pre-processing procedures to the cell line data using Bioconductor, consisting of creating a SingleCellExperiment file, removing low count cells, normalizing the data with SCRAN, and creating a vector with the true cell type labels. Finally, we take the pre-processed cell line data and perform PCA, projecting the data onto the first $d=5$ principal components. The final data object is denoted as X, a $519 \times 5$ matrix.
+First, we apply standard pre-processing procedures to the cell line data using Bioconductor, consisting of creating a SingleCellExperiment file, removing low count cells, normalizing the data with SCRAN, and creating a vector with the true cell type labels. Finally, we take the pre-processed cell line data and perform PCA, projecting the data onto the first $p=5$ principal components. The final data object is denoted as X, a $519 \times 5$ matrix.
 
 ```{r}
 cells_csv <- read.csv("data/cells.csv")
@@ -118,7 +118,7 @@ z <- z[trip_ind,] # component labels
 
 # Obtaining Model-Based Clustering Point Estimates
 
-The next step in the procedure is to produce the posterior expected Hellinger distance matrix $\Delta$. This is achieved by applying the function "makeHellingerAvg", which computes a separate Hellinger distance matrix for each MCMC iteration, then takes the average of these matricies. The output is the upper triangle of $\Delta$ (the distance matrix is symmetric). After creating $\Delta$, we generate candidate partitions using average-linkage hierarchical clustering.
+The next step in the procedure is to produce the posterior expected Hellinger distance matrix $\Delta$. This is achieved by applying the function ```comp_delta()```, which computes a separate Hellinger distance matrix for each MCMC iteration, then takes the average of these matricies. The output is the upper triangle of $\Delta$ (the distance matrix is symmetric). After creating $\Delta$, we generate candidate partitions using average-linkage hierarchical clustering.
 
 ```{r}
 # apply hellinger distance function
