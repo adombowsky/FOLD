@@ -47,8 +47,7 @@ doParallel::registerDoParallel(cl = my.cluster)
 ```{r, warning = F}
 N <- c(100, 500, 1000, 2500) # sample size
 d <- 2 # dimension
-#R <- 100 # replications at each n
-R <- 1 # replications at each n
+R <- 100 # replications at each n
 K_0 <- 3 # number of true mixture components
 S <- 9000 # iterations
 B <- 1000 # burnin
