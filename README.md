@@ -5,11 +5,14 @@ This is the GitHub repository for Bayesian Clustering via Fusing of Localized De
 To install our R package, run the following code in your console.
 ```r
 install.packages("devtools")
-devtools::install_github("adombowsky/FOLD/fold")
+devtools::install_github("adombowsky/FOLD/fold", build_vignettes=TRUE)
 ```
 
 ## Introductory Vignette
-We recommend first running the vignette ```fold/vignettes/introduction.Rmd```, which demonstrates the user-facing functions in the ```fold``` package.
+We recommend first running the vignette ```fold/vignettes/introduction.Rmd```, which demonstrates the user-facing functions in the ```fold``` package. You can load the vignette after installation using this code.
+```r
+vignette("introduction", package="fold")
+```
 
 ## Code for Reproducing Results
 * Application to the GSE81861 cell line dataset (Figures 4-6, Supplement Figure H.7): ```cells.R```.
