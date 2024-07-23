@@ -208,9 +208,10 @@ ARI_seeds <- c(adjustedRandIndex(c0, c.fold),
 
 
 ### Example 3: Wine
+
+## step 0: import data
 # Dataset link: https://archive.ics.uci.edu/dataset/109/wine
 # move into "data" folder
-## step 0: import data
 wine <- read.csv("data/wine.data")
 c0 <- wine$X1
 Y <- wine[,-1]
