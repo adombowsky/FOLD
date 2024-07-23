@@ -18,6 +18,7 @@ vignette("introduction", package="fold")
 * Application to the GSE81861 cell line dataset (Figures 4-6, Supplement Figure H.7): ```cells.R```.
 * Gaussian mixture, skew Gaussian mixture, and skew-symmetric mixture simulation studies (Figures A.2-A.4): ```SimStudy_mvn.Rmd```, ```SimStudy_mvsn.Rmd```, and ```SimStudy_nongauss.Rmd```, respectively.
 * Illustration of oracle clusterings (Figures B.5 and B.6): ```convergence_plots.R```.
+* Comparison of FOLD and competitors to the ```iris```, ```seeds```, and ```wine``` classification datasets: ```benchmarks.R```.
 * Credible ball simulation study: ```simulatespirals.R```. 
 
 ## Code for Reproducing Additional Figures
