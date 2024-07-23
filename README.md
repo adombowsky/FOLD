@@ -9,7 +9,7 @@ devtools::install_github("adombowsky/FOLD/fold", build_vignettes=TRUE)
 ```
 
 ## Introductory Vignette
-We recommend first running the vignette ```fold/vignettes/introduction.Rmd```, which demonstrates the user-facing functions in the ```fold``` package. You can load the vignette after installation using this code.
+We recommend first running the vignette ```introduction```, which demonstrates the user-facing functions in the ```fold``` package. You can load the vignette after installation using this code.
 ```r
 vignette("introduction", package="fold")
 ```
