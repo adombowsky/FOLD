@@ -15,14 +15,14 @@ vignette("introduction", package="fold")
 ```
 
 ## Code for Reproducing Results
-* Application to the GSE81861 cell line dataset (Figures 4-6, Supplement Figure H.7): ```cells.R```.
+* Application to the GSE81861 cell line dataset (Figures 4-6, Supplement Figure I.7): ```cells.R```.
 * Gaussian mixture, skew Gaussian mixture, and skew-symmetric mixture simulation studies (Figures A.2-A.4): ```SimStudy_mvn.Rmd```, ```SimStudy_mvsn.Rmd```, and ```SimStudy_nongauss.Rmd```, respectively.
 * Illustration of oracle clusterings (Figures B.5 and B.6): ```convergence_plots.R```.
-* Comparison of FOLD and competitors to the ```iris```, ```seeds```, and ```wine``` classification datasets: ```benchmarks.R```.
+* Comparison of FOLD and competitors to the ```iris```, ```seeds```, and ```wine``` classification datasets: ```benchmarks.R```. The ```seeds``` and ```wine``` dataset are available on the UCI machine learning repository. Links to these datasets are included in the comments of ```benchmarks.R```.
 * Credible ball simulation study: ```simulatespirals.R```. 
 
 ## Code for Reproducing Additional Figures
 * Example of over-clustering (Figure 1): ```introexample.R```.
 * Clustering the moons data (Figures 2 and 3): ```locationmoons.R```.
 * Contour plots of simulation examples (Supplement Figure A.1): ```contourmaker.R```.
-* Plot of the spirals data (Supplement Figure I.8): ```spiralsplot.R```.
+* Plot of the spirals data (Supplement Figure J.8): ```spiralsplot.R```.
