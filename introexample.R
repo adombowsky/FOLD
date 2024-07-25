@@ -1,5 +1,5 @@
 # packages
-library(sn)
+library(foldcluster)
 library(ggplot2)
 library(dplyr)
 library(mcclust.ext)
@@ -49,9 +49,6 @@ y <- scale(y)
 n <- nrow(y)
 d <- 2
 # fitting a GMM
-source("rfuncts/mvnorm_gibbs.R")
-source("rfuncts/mnorm_D_apply.R")
-sourceCpp("rcppfuncts/mnorm_D_arma.cpp")
 S <- 25000 # iterations
 B <- 1000 # burnin
 L <- 10

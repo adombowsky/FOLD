@@ -15,4 +15,4 @@ BiocManager::install("M3Drop")
 # install mcclust.ext from Github
 devtools::install_github("sarawade/mcclust.ext")
 # install fold from Github
-devtools::install_github("adombowsky/FOLD/fold")
+devtools::install_github("adombowsky/FOLD/foldcluster")

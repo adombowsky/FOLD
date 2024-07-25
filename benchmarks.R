@@ -1,5 +1,5 @@
 # libraries and preliminaries
-require(fold)
+require(foldcluster)
 require(mcclust)
 require(mcclust.ext)
 require(mclust)

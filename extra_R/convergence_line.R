@@ -1,6 +1,6 @@
 convergence_line <- function(n, seed,S){
   # packages and functions
-  require(fold)
+  require(foldcluster)
   require(Rcpp)
   require(RcppArmadillo)
   require(ggplot2)

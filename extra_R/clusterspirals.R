@@ -1,5 +1,6 @@
 clusterspirals <- function(N) {
   # packages
+  library(foldcluster)
   library(mclust)
   library(mcclust.ext)
   library(KODAMA)

@@ -35,7 +35,7 @@ makecG <- function(theta, omega, p, max.k){
 #' @details This function extracts posterior samples from \code{c_theta}, a minimizer of the FOLD
 #'  loss function. The resulting matrix of samples can then be used to compute the credible ball.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 get_ctheta_samps <- function(theta, omega, p, max.k) {
   theta <- array(unlist(theta), dim = c(n, 2*p + choose(p,2), length(theta)))
   cgsamps <- t(apply(theta, 3, function(x) makecG(x, omega=omega, p=p, max.k=max.k)))
@@ -52,7 +52,7 @@ get_ctheta_samps <- function(theta, omega, p, max.k) {
 #'  (\code{c.horiz}), the upper vertical bounds (\code{c.uppervert}), or the lower vertical bounds
 #'  (\code{c.lowervert}).
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 ctheta_ball <- function(c_fold, ctheta_samps){
   cb <- credibleball(c_fold,ctheta_samps)
   return(cb)

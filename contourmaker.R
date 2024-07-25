@@ -62,7 +62,6 @@ skewnormal_contours = ggplot(xgrid, aes(x = x1, y = x2, z = x3)) + geom_contour(
 
 # skew-symmetric
 d.multivar.gmm <- function(x, p, Mu, Sigma){
-  s <- sample(1:2, size = n, replace = T, prob = c(p,1-p))
   x <- p * mvtnorm::dmvnorm(x = x, mean = Mu[1,], sigma = Sigma[,,1]) +
     (1-p) * mvtnorm::dmvnorm(x=x, mean = Mu[2,], sigma = Sigma[,,2])
   return(x)

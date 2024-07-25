@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 source("dependencies.R")
-library(fold) # our R package
+library(foldcluster) # our R package
 library(ggplot2)
 library(mcclust)
 library(mcclust.ext)
@@ -54,7 +54,7 @@ B <- 1000 # burnin
 L <- 30 # number of fitted components
 x <- foreach(i = 1:length(N)) %:%
   foreach(r = 1:R,
-          .packages = c("mcclust", "mclust", "fold"),
+          .packages = c("mcclust", "mclust", "foldcluster"),
           .noexport = c("dmv",
                         "hgauss",
                         "makeh",

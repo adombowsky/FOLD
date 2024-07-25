@@ -1,5 +1,5 @@
 makecG_loc <- function(theta, Sigma, w, d, max.k){
-  require(fold)
+  require(foldcluster)
   require(Rcpp)
   require(RcppArmadillo)
   Rcpp::sourceCpp("extra_src/")

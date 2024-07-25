@@ -1,4 +1,4 @@
-Package: fold
+Package: foldcluster
 Title: Fusing of Localized Densities: a Bayesian clustering method 
   for misspecified models
 Version: 0.0.0.9000

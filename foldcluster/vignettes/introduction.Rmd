@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library(fold) # our r package
+library(foldcluster) # our r package
 ```
 
 # Introduction

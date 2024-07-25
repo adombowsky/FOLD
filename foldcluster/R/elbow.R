@@ -9,7 +9,7 @@
 #' @details The elbow plot computes the total within-cluster pairwise Hellinger distances for each candidate clustering. A heuristic for
 #' choosing the number of clusters is to identify the candidate at which the plot bends.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 elbow <- function(tree, Delta) {
   max.k <- nrow(tree)
   tv <- c()

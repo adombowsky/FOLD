@@ -18,7 +18,7 @@
 #' conjugate; the means and covariance are drawn from a normal-Inverse-Wishart distribution with parameters \code{w},
 #' \code{kappa}, \code{r}, and \code{C}, while the weights follow a Dirichlet distribution with parameter \code{alpha}.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 mvnorm_gibbs <- function(S, y, L=10, alpha=rep(1/L,L), w, kappa, r, C, stops = 1){
 
   # prelims
@@ -121,7 +121,7 @@ mvnorm_gibbs <- function(S, y, L=10, alpha=rep(1/L,L), w, kappa, r, C, stops = 1
 #' Inv-Gamma(\code{r}/2,\code{C}/2), in order to be consistent with the normal-Inverse-Wishart for higher dimensions.
 #' The weights follow a Dirichlet distribution with parameter \code{alpha}.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 unorm_gibbs <- function(S, y, L=10, alpha=rep(1/L,L), w, kappa, r, C, stops = 1){
 
   # prelims
@@ -213,7 +213,7 @@ unorm_gibbs <- function(S, y, L=10, alpha=rep(1/L,L), w, kappa, r, C, stops = 1)
 #' fixed and constant across all components. The cluster means, or centers, are drawn from a normal distribution with parameters
 #' \code{mu_0} and \code{Sigma_0}, while the weights are given a Dirichlet prior with parameter \code{alpha}.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 lmvnorm_gibbs <- function(S, y, L, alpha=rep(1/L,L), mu_0, Sigma_0, Sigma, stops = 1){
   # prelims
   n <- nrow(y)

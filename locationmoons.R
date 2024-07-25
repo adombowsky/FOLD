@@ -1,5 +1,5 @@
 # packages
-library(fold)
+library(foldcluster)
 library(ggplot2)
 library(dplyr)
 library(mcclust.ext)

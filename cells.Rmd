@@ -11,7 +11,7 @@ Before we begin the analysis, we install the extra dependencies we will need for
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 source("dependencies.R")
-library(fold) # our R package
+library(foldcluster) # our R package
 library(Rcpp)
 library(RcppArmadillo)
 library(ggplot2)

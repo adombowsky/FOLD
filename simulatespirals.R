@@ -1,5 +1,5 @@
 # packages
-library(fold)
+library(foldcluster)
 library(grid)
 library(gridExtra)
 library(Rcpp)

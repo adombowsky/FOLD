@@ -7,7 +7,7 @@
 #' @importFrom Rcpp sourceCpp
 #' @return An \code{n}x\code{n} symmetric matrix of the pairwise expected Hellinger distance for all objects.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 comp_delta <- function(theta, p, n) {
   theta <- array(unlist(theta), dim = c(n, 2*p + choose(p,2), length(theta))) # mean, covariance diagonal, covariance upper triangle
   Delta <- matrix(0, nrow = n, ncol = n)
@@ -29,7 +29,7 @@ comp_delta <- function(theta, p, n) {
 #' @importFrom Rcpp sourceCpp
 #' @return The risk of the supplied clustering.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 fold_risk <- function(c, Delta, omega) {
   return(risk_cpp(c,Delta,omega))
 }
@@ -43,7 +43,7 @@ fold_risk <- function(c, Delta, omega) {
 #' @importFrom Rcpp sourceCpp
 #' @return A vector, the clustering which minimizes the FOLD risk.
 #' @export
-#' @useDynLib fold
+#' @useDynLib foldcluster
 min_risk <- function(c, Delta, omega) {
   return(as.vector(minimize_risk_cpp(c,Delta,omega)))
 }

@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // mnorm_D_arma
 arma::mat mnorm_D_arma(arma::mat mu, arma::mat Sig_diag, arma::mat Sig_LT);
-RcppExport SEXP _fold_mnorm_D_arma(SEXP muSEXP, SEXP Sig_diagSEXP, SEXP Sig_LTSEXP) {
+RcppExport SEXP _foldcluster_mnorm_D_arma(SEXP muSEXP, SEXP Sig_diagSEXP, SEXP Sig_LTSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,7 +26,7 @@ END_RCPP
 }
 // unorm_D_arma
 arma::mat unorm_D_arma(arma::vec mu, arma::vec sigma);
-RcppExport SEXP _fold_unorm_D_arma(SEXP muSEXP, SEXP sigmaSEXP) {
+RcppExport SEXP _foldcluster_unorm_D_arma(SEXP muSEXP, SEXP sigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -38,7 +38,7 @@ END_RCPP
 }
 // makeHellingerAvg
 arma::vec makeHellingerAvg(arma::cube theta, int d, int n);
-RcppExport SEXP _fold_makeHellingerAvg(SEXP thetaSEXP, SEXP dSEXP, SEXP nSEXP) {
+RcppExport SEXP _foldcluster_makeHellingerAvg(SEXP thetaSEXP, SEXP dSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -51,7 +51,7 @@ END_RCPP
 }
 // makeuHellingerAvg
 arma::vec makeuHellingerAvg(arma::cube theta, int n);
-RcppExport SEXP _fold_makeuHellingerAvg(SEXP thetaSEXP, SEXP nSEXP) {
+RcppExport SEXP _foldcluster_makeuHellingerAvg(SEXP thetaSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -63,7 +63,7 @@ END_RCPP
 }
 // risk_cpp
 double risk_cpp(arma::vec c, arma::mat Delta, double omega);
-RcppExport SEXP _fold_risk_cpp(SEXP cSEXP, SEXP DeltaSEXP, SEXP omegaSEXP) {
+RcppExport SEXP _foldcluster_risk_cpp(SEXP cSEXP, SEXP DeltaSEXP, SEXP omegaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -76,7 +76,7 @@ END_RCPP
 }
 // rand_index
 double rand_index(arma::vec c1, arma::vec c2);
-RcppExport SEXP _fold_rand_index(SEXP c1SEXP, SEXP c2SEXP) {
+RcppExport SEXP _foldcluster_rand_index(SEXP c1SEXP, SEXP c2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -88,7 +88,7 @@ END_RCPP
 }
 // minimize_risk_cpp
 arma::vec minimize_risk_cpp(arma::mat c, arma::mat Delta, double omega);
-RcppExport SEXP _fold_minimize_risk_cpp(SEXP cSEXP, SEXP DeltaSEXP, SEXP omegaSEXP) {
+RcppExport SEXP _foldcluster_minimize_risk_cpp(SEXP cSEXP, SEXP DeltaSEXP, SEXP omegaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -101,7 +101,7 @@ END_RCPP
 }
 // ldmvnorm_arma
 double ldmvnorm_arma(arma::vec y, arma::vec mu, arma::mat Sigma, int d);
-RcppExport SEXP _fold_ldmvnorm_arma(SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP, SEXP dSEXP) {
+RcppExport SEXP _foldcluster_ldmvnorm_arma(SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP, SEXP dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -115,7 +115,7 @@ END_RCPP
 }
 // ldunorm_arma
 double ldunorm_arma(double y, double mu, double sigma_sq);
-RcppExport SEXP _fold_ldunorm_arma(SEXP ySEXP, SEXP muSEXP, SEXP sigma_sqSEXP) {
+RcppExport SEXP _foldcluster_ldunorm_arma(SEXP ySEXP, SEXP muSEXP, SEXP sigma_sqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -128,7 +128,7 @@ END_RCPP
 }
 // maketau
 arma::mat maketau(arma::vec Pi, arma::mat y, arma::mat mu, arma::cube Sigma);
-RcppExport SEXP _fold_maketau(SEXP PiSEXP, SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP) {
+RcppExport SEXP _foldcluster_maketau(SEXP PiSEXP, SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -142,7 +142,7 @@ END_RCPP
 }
 // makeutau
 arma::mat makeutau(arma::vec Pi, arma::vec y, arma::vec mu, arma::vec Sigma);
-RcppExport SEXP _fold_makeutau(SEXP PiSEXP, SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP) {
+RcppExport SEXP _foldcluster_makeutau(SEXP PiSEXP, SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -156,7 +156,7 @@ END_RCPP
 }
 // lmaketau
 arma::mat lmaketau(arma::vec Pi, arma::mat y, arma::mat mu, arma::mat Sigma);
-RcppExport SEXP _fold_lmaketau(SEXP PiSEXP, SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP) {
+RcppExport SEXP _foldcluster_lmaketau(SEXP PiSEXP, SEXP ySEXP, SEXP muSEXP, SEXP SigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -170,22 +170,22 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_fold_mnorm_D_arma", (DL_FUNC) &_fold_mnorm_D_arma, 3},
-    {"_fold_unorm_D_arma", (DL_FUNC) &_fold_unorm_D_arma, 2},
-    {"_fold_makeHellingerAvg", (DL_FUNC) &_fold_makeHellingerAvg, 3},
-    {"_fold_makeuHellingerAvg", (DL_FUNC) &_fold_makeuHellingerAvg, 2},
-    {"_fold_risk_cpp", (DL_FUNC) &_fold_risk_cpp, 3},
-    {"_fold_rand_index", (DL_FUNC) &_fold_rand_index, 2},
-    {"_fold_minimize_risk_cpp", (DL_FUNC) &_fold_minimize_risk_cpp, 3},
-    {"_fold_ldmvnorm_arma", (DL_FUNC) &_fold_ldmvnorm_arma, 4},
-    {"_fold_ldunorm_arma", (DL_FUNC) &_fold_ldunorm_arma, 3},
-    {"_fold_maketau", (DL_FUNC) &_fold_maketau, 4},
-    {"_fold_makeutau", (DL_FUNC) &_fold_makeutau, 4},
-    {"_fold_lmaketau", (DL_FUNC) &_fold_lmaketau, 4},
+    {"_foldcluster_mnorm_D_arma", (DL_FUNC) &_foldcluster_mnorm_D_arma, 3},
+    {"_foldcluster_unorm_D_arma", (DL_FUNC) &_foldcluster_unorm_D_arma, 2},
+    {"_foldcluster_makeHellingerAvg", (DL_FUNC) &_foldcluster_makeHellingerAvg, 3},
+    {"_foldcluster_makeuHellingerAvg", (DL_FUNC) &_foldcluster_makeuHellingerAvg, 2},
+    {"_foldcluster_risk_cpp", (DL_FUNC) &_foldcluster_risk_cpp, 3},
+    {"_foldcluster_rand_index", (DL_FUNC) &_foldcluster_rand_index, 2},
+    {"_foldcluster_minimize_risk_cpp", (DL_FUNC) &_foldcluster_minimize_risk_cpp, 3},
+    {"_foldcluster_ldmvnorm_arma", (DL_FUNC) &_foldcluster_ldmvnorm_arma, 4},
+    {"_foldcluster_ldunorm_arma", (DL_FUNC) &_foldcluster_ldunorm_arma, 3},
+    {"_foldcluster_maketau", (DL_FUNC) &_foldcluster_maketau, 4},
+    {"_foldcluster_makeutau", (DL_FUNC) &_foldcluster_makeutau, 4},
+    {"_foldcluster_lmaketau", (DL_FUNC) &_foldcluster_lmaketau, 4},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_fold(DllInfo *dll) {
+RcppExport void R_init_foldcluster(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
