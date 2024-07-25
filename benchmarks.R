@@ -23,13 +23,14 @@ B <- 1000 # burnin
 L <- 50
 # fitting
 set.seed(seed)
-fit <- lmvnorm_gibbs(S = S,
+fit <- mvnorm_gibbs(S = S,
                     y = scale(X),
                     L = L,
                     alpha = rep(1/2,L),
-                    mu_0 = rep(0,p),
-                    Sigma_0 = diag(1,p),
-                    Sigma = 0.5*diag(1,p),
+                    w=rep(0,p),
+                    kappa=1,
+                    r=p+2,
+                    C=diag(1,p),
                     stops = 5000)
 # burn-out
 theta <- fit$theta[-(1:B)]
@@ -123,13 +124,14 @@ B <- 1000 # burnin
 L <- 50
 # fitting
 set.seed(seed)
-fit <- lmvnorm_gibbs(S = S,
+fit <- mvnorm_gibbs(S = S,
                      y = scale(X),
                      L = L,
                      alpha = rep(1/2,L),
-                     mu_0 = rep(0,p),
-                     Sigma_0 = diag(1,p),
-                     Sigma = 0.5*diag(1,p),
+                     w=rep(0,p),
+                     kappa=1,
+                     r=p+2,
+                     C=diag(1,p),
                      stops = 5000)
 # burn-out
 theta <- fit$theta[-(1:B)]
@@ -225,14 +227,15 @@ B <- 1000 # burnin
 L <- 50
 # fitting
 set.seed(seed)
-fit <- lmvnorm_gibbs(S = S,
-                     y = scale(X),
-                     L = L,
-                     alpha = rep(1/2,L),
-                     mu_0 = rep(0,p),
-                     Sigma_0 = diag(1,p),
-                     Sigma = 0.5*diag(1,p),
-                     stops = 5000)
+fit <- mvnorm_gibbs(S = S,
+                    y = scale(X),
+                    L = L,
+                    alpha = rep(1/2,L),
+                    w=rep(0,p),
+                    kappa=1,
+                    r=p+2,
+                    C=diag(1,p),
+                    stops = 5000)
 # burn-out
 theta <- fit$theta[-(1:B)]
 z <- fit$z[-(1:B),]
