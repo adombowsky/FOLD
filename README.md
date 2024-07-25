@@ -1,17 +1,17 @@
 # FOLD
-This is the GitHub repository for Bayesian Clustering via Fusing of Localized Densities. In this article, we present Fusing of Localized Densities (FOLD), a decision theoretic clustering method that focuses on grouping the _localized densities_ from a mixture model. Here, you will find the ```fold``` R package and code required to reproduce all plots, the simulation studies, and the application to the cell line dataset.
+This is the GitHub repository for Bayesian Clustering via Fusing of Localized Densities. In this article, we present Fusing of Localized Densities (FOLD), a decision theoretic clustering method that focuses on grouping the _localized densities_ from a mixture model. Here, you will find the ```foldcluster``` R package and code required to reproduce all plots, the simulation studies, and the application to the cell line dataset.
 
 ## R Package
 To install our R package, run the following code in your console.
 ```r
 install.packages("devtools")
-devtools::install_github("adombowsky/FOLD/fold", build_vignettes=TRUE)
+devtools::install_github("adombowsky/FOLD/foldcluster", build_vignettes=TRUE)
 ```
 
 ## Introductory Vignette
-We recommend first running the vignette ```introduction```, which demonstrates the user-facing functions in the ```fold``` package. You can load the vignette after installation using this code.
+We recommend first running the vignette ```introduction```, which demonstrates the user-facing functions in the ```foldcluster``` package. You can load the vignette after installation using this code.
 ```r
-vignette("introduction", package="fold")
+vignette("introduction", package="foldcluster")
 ```
 
 ## Code for Reproducing Results
