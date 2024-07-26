@@ -152,7 +152,7 @@ c.Binder <- c.b$cl
 mcl <- Mclust(X, G = 1:24)
 ```
 
-Next, we create the elbow plot for FOLD and use it to select a point estimate. The following code recreates Figure 4, then chooses a clustering with $6$ clusters. Note that we can construct a similar plot directly in the ```fold``` package using the ```elbow()``` function.
+Next, we create the elbow plot for FOLD and use it to select a point estimate. The following code recreates Figure 4, then chooses a clustering with $6$ clusters. Note that we can construct a similar plot directly in the ```foldcluster``` package using the ```elbow()``` function.
 
 ```{r}
 # Elbow Plot using GGplot
