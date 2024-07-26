@@ -401,7 +401,7 @@ plot_grid(foldumap, horizumap, lowervumap, uppervumap, labels = c('(a)', '(b)', 
 
 # Algorithmic Clustering Methods
 
-We also compare our approach to algorithmic clustering methods, including hierarchical clustering (HCA), k-means, DBSCAN, and spectral clustering. This code also creates a UMAP plot using the algorithmic methods, which corresponds to Figure H.7 in the Supplementary Material.
+We also compare our approach to algorithmic clustering methods, including hierarchical clustering (HCA), k-means, DBSCAN, and spectral clustering. This code also creates a UMAP plot using the algorithmic methods, which corresponds to Figure I.10 in the Supplementary Material.
 
 ```{r}
 set.seed(2001) # setting same seed for this code chunk
