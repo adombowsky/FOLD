@@ -54,12 +54,7 @@ B <- 1000 # burnin
 L <- 30 # number of fitted components
 x <- foreach(i = 1:length(N)) %:%
   foreach(r = 1:R,
-          .packages = c("mcclust", "mclust", "foldcluster"),
-          .noexport = c("dmv",
-                        "hgauss",
-                        "makeh",
-                        "Deltapair",
-                        "makeOracle")) %dopar% {
+          .packages = c("mcclust", "mclust", "foldcluster")) %dopar% {
   mvn.cluster(n = N[i],
                S = S,
                B = B,

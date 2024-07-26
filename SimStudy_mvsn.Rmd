@@ -53,15 +53,7 @@ B <- 1000 # burnin
 L <- 30 # number of fitted components
 x <- foreach(i = 1:length(N)) %:%
   foreach(r = 1:R,
-          .packages = c("mcclust", "foldcluster")#,
-          # .noexport = c("ldmvnorm_arma",
-          #                  "maketau",
-          #                  "makeSigma",
-          #                  "makeSigmacube",
-          #                  "makeSigmaDet",
-          #                  "mnorm_D_arma",
-          #                  "makeHellingerAvg")
-          ) %dopar% {
+          .packages = c("mcclust", "mclust", "foldcluster")) %dopar% {
   mvsn.cluster(n = N[i],
                S = S,
                B = B,
